@@ -1,0 +1,33 @@
+[project]
+name = "dpp-dsml-takehome"
+version = "0.1.0"
+description = "DPP DSML take-home: classical ML, NLP, and a local FastAPI inference service"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=6",
+    "ruff>=0.9",
+    "httpx>=0.28",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["models/*", "apps/*"]
+
+[tool.uv.sources]
+dpp-delivery-time = { workspace = true }
+dpp-yelp-sentiment = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["models", "apps"]
+addopts = "-ra"

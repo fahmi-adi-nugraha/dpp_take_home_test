@@ -4,9 +4,9 @@ Monorepo for the DPP DSML take-home test. It contains two independent ML
 projects and a local FastAPI inference service, managed as a single `uv`
 workspace.
 
-> **Status:** scaffold only. Training, EDA, data fetching, API behavior, and
-> tests are not implemented yet. The commands below describe the intended
-> workflow.
+> **Status:** classical ML data fetching is implemented. Training, EDA, NLP data
+> fetching, API behavior, and the remaining tests are not implemented yet. The
+> commands below describe the intended workflow.
 
 ## Projects
 
@@ -69,17 +69,24 @@ The API will be available at `http://127.0.0.1:8000`, with interactive docs at
 
 ## Data setup
 
-Copy the environment template and fill in the credentials needed for the
-chosen data sources:
+Kaggle credentials are optional for the public Zomato dataset. Copy the
+environment template if you want authenticated Kaggle requests or need a Hugging
+Face token for the Yelp dataset:
 
 ```bash
 cp .env.example .env
 ```
 
-Then run the planned fetch commands:
+Fetch commands:
 
 ```bash
+# Zomato: anonymous download works for the public dataset
+uv run fetch-delivery-data
+
+# Zomato: optional authenticated download
 uv run --env-file .env fetch-delivery-data
+
+# Yelp: planned, not implemented yet
 uv run --env-file .env fetch-sentiment-data
 ```
 
@@ -114,5 +121,6 @@ intended future slot for the optional UI.
 
 ## Scope and status
 
-This repository is currently a scaffold. It does not include training code,
-EDA, data fetching, API logic, a database, authentication, Docker, or CI.
+Classical ML data fetching is implemented. The repository does not yet include
+training code, EDA, NLP data fetching, API logic, a database, authentication,
+Docker, or CI.

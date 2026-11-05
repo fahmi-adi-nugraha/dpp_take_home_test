@@ -12,6 +12,7 @@ the Zomato Delivery Operations Analytics Dataset.
 - **Source:** <https://www.kaggle.com/datasets/saurabhbadole/zomato-delivery-operations-analytics-dataset>
 - **Raw data location:** `data/raw/zomato/`
 - **Fetch command:** `uv run fetch-delivery-data`
+- **Data dictionary:** [DATA_DICTIONARY.md](DATA_DICTIONARY.md)
 - **Credentials:** optional. The dataset currently downloads anonymously. Set
   `KAGGLE_USERNAME` and `KAGGLE_KEY` in `.env` to use authenticated requests.
 

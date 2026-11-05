@@ -16,6 +16,47 @@ workspace.
 | Project 2 | `dpp-yelp-sentiment` | `models/yelp-sentiment` | Yelp review sentiment | `POST /predict/sentiment` |
 | Service | `dpp-inference-api` | `apps/api` | Local FastAPI inference | — |
 
+## Guideline alignment
+
+The take-home test requires two independent ML projects and a deployed REST
+API, with an optional Streamlit UI and a final report and presentation.
+
+| Guideline requirement | Where it is addressed |
+|---|---|
+| Project 1: simple ML model (regression, classification, or clustering) | `models/delivery-time` scopes a regression model for Zomato delivery time. |
+| Project 2: NLP, CV, or RAG model | `models/yelp-sentiment` scopes an NLP sentiment model using a BERT-family transformer. |
+| REST API deployment | `apps/api` contains the FastAPI service with planned endpoints for both models. |
+| Streamlit UI (optional) | Future slot: `apps/streamlit`. |
+| Final report and presentation | Not yet added. |
+
+The required workflow for each project is:
+
+- define a specific, relevant, and measurable business problem;
+- choose a dataset and document the methodology, assumptions, and target
+  definition;
+- handle missing values, duplicate rows, anomalies, type conversion,
+  categorical encoding, and numeric scaling or standardization;
+- perform EDA covering distributions, feature relationships, and documented
+  insights;
+- train and evaluate the model using task-appropriate metrics;
+- serve the best model through the REST API with a prediction endpoint,
+  example request and response, and local run instructions;
+- explain the performance-monitoring plan and when the model should be
+  retrained.
+
+Suggested evaluation metrics:
+
+- Project 1 regression: RMSE, MAE, and R².
+- Project 2 NLP classification: accuracy, precision, recall, and F1; macro F1
+  is useful for class balance.
+- If Project 2 changes to generation, computer vision, or RAG, use the
+  guideline metrics such as BLEU, perplexity, IoU, Hit@K, or MRR as
+  appropriate.
+
+Datasets may come from the provided references or another open-source or real
+dataset. The current choices are the Zomato Delivery Operations Analytics
+Dataset and the Yelp review dataset.
+
 ## Repository layout
 
 ```text
@@ -90,6 +131,9 @@ uv run --env-file .env fetch-delivery-data
 uv run --env-file .env fetch-sentiment-data
 ```
 
+The field-level Zomato dataset dictionary is at
+[`models/delivery-time/DATA_DICTIONARY.md`](models/delivery-time/DATA_DICTIONARY.md).
+
 ## Data and artifact policy
 
 - Raw, interim, and processed datasets are not committed.
@@ -121,6 +165,13 @@ intended future slot for the optional UI.
 
 ## Scope and status
 
-Classical ML data fetching is implemented. The repository does not yet include
-training code, EDA, NLP data fetching, API logic, a database, authentication,
-Docker, or CI.
+Classical ML data fetching is implemented. Still pending:
+
+- EDA and preprocessing for both projects
+- training and evaluation for both projects
+- NLP data fetching
+- API logic
+- optional Streamlit UI
+- final report and presentation
+
+The repository does not include a database, authentication, Docker, or CI.

@@ -25,6 +25,9 @@ __marimo__/
 .env.*
 !.env.example
 
+# Local working notes
+models/delivery-time/feature_recommendations.md
+
 # Datasets
 **/data/raw/*
 **/data/interim/*

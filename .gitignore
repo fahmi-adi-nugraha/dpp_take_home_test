@@ -48,6 +48,9 @@ models/delivery-time/feature_recommendations.md
 *.safetensors
 *.onnx
 
+# Generated EDA images
+models/delivery-time/notebooks/imgs/
+
 # OS / editor
 .DS_Store
 .idea/

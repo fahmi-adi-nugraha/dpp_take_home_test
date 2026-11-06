@@ -47,7 +47,7 @@ needed. `[ ]` marks optional or experimental work.
       extremes.
 - [x] `order_hour` — hour of order placement; numeric for XGBoost, optionally
       categorical or one-hot.
-- [ ] `order_hour_sin` and `order_hour_cos` — cyclical encoding for the linear
+- [x] `order_hour_sin` and `order_hour_cos` — cyclical encoding for the linear
       baseline or an encoding ablation; not part of the default XGBoost set.
 - [x] `is_rush_hour` — 11:00–14:00 or 17:00–21:00.
 - [x] `is_meal_period` — broad breakfast/lunch/dinner window.
@@ -64,12 +64,15 @@ needed. `[ ]` marks optional or experimental work.
 - [ ] `weather_group` — collapse into clear, cloudy/fog, and storm/wind groups.
 - [ ] `day_of_week` — weak signal; keep only if validation improves.
 - [ ] `is_weekend` — no meaningful effect in the initial screen.
-- [ ] `age_bin` — 5-year bins for a linear model; XGBoost can use raw age.
+- [x] `age_bin` — 5-year bins for a linear model; XGBoost can use raw age.
 - [ ] `rating_bin` — bin the non-monotonic rating values for a linear model.
 - [ ] `distance_decile` or `distance_bin` — useful for a linear model; XGBoost
       can use raw distance.
 - [ ] `restaurant_coords_sign_flipped` — data-quality flag; test whether it
       adds signal after distance repair.
+- [ ] `coord_status` — diagnostic category (valid, sign_flipped, invalid);
+      use `coordinates_invalid` and optionally `restaurant_coords_sign_flipped`
+      in the baseline unless the categorical version improves validation.
 - [ ] `festival_missing` — **high-signal but suspicious**: every missing-festival
       row has a 10–14 minute target. Include only if an ablation supports it.
 - [ ] `age_missing`, `rating_missing`, `weather_missing`, `traffic_missing` —
@@ -81,7 +84,7 @@ needed. `[ ]` marks optional or experimental work.
       cross-validation.
 - [ ] Raw restaurant/delivery coordinates — only after coordinate cleaning;
       distance and city are safer baseline features.
-- [ ] Rounded coordinates or geohash — experimental after the baseline.
+- [x] Rounded coordinates or geohash — experimental after the baseline.
 
 ### Weak or excluded
 
@@ -100,6 +103,8 @@ needed. `[ ]` marks optional or experimental work.
       distances before and after repair.
 - [x] Set distance to null when coordinate pairs remain invalid.
 - [x] Add `coordinates_invalid` as a model feature.
+- [x] Derive `coord_status` for EDA; keep binary coordinate flags in the
+      baseline.
 - [ ] Add `same_location_flag` if repaired coordinates produce zero distance.
 - [ ] Add distance bins/deciles for linear or interpretable models.
 
@@ -107,7 +112,7 @@ needed. `[ ]` marks optional or experimental work.
 
 - [x] Convert all time values to minutes since midnight.
 - [x] Derive `order_hour` for tree models.
-- [ ] Derive `order_hour_sin` and `order_hour_cos` for the linear baseline or an
+- [x] Derive `order_hour_sin` and `order_hour_cos` for the linear baseline or an
       encoding ablation.
 - [x] Derive `is_rush_hour` and `is_meal_period`.
 - [x] Add `time_order_missing`.
@@ -122,8 +127,8 @@ needed. `[ ]` marks optional or experimental work.
       `Type_of_vehicle` only if that feature is retained.
 - [x] Encode `Festival` as a binary indicator.
 - [x] Add missing indicators for `City` and `multiple_deliveries`.
-- [ ] Group or regularize rare levels if validation is unstable.
-- [ ] Use native categorical handling in XGBoost as an alternative to one-hot.
+- [x] Group or regularize rare levels if validation is unstable.
+- [x] Use native categorical handling in XGBoost as an alternative to one-hot.
 
 ### Numeric transforms
 
@@ -131,10 +136,10 @@ needed. `[ ]` marks optional or experimental work.
       `Delivery_person_Ratings` numeric for XGBoost.
 - [x] Add `vehicle_condition_is_zero` for a linear baseline if that split is
       retained.
-- [ ] Add `age_bin` and `rating_bin` for a linear baseline.
+- [x] Add `age_bin` and `rating_bin` for a linear baseline.
 - [ ] Add `distance_decile` for a linear baseline.
-- [ ] Test clipping ratings above 5.0 vs retaining them with a flag.
-- [ ] Test whether age should be clipped to a plausible range.
+- [x] Test clipping ratings above 5.0 vs retaining them with a flag.
+- [x] Test whether age should be clipped to a plausible range.
 
 ### Missingness
 
@@ -162,7 +167,7 @@ needed. `[ ]` marks optional or experimental work.
 - [x] Inspect residuals and the target spikes at 15, 25, and 35 minutes.
 - [ ] Test a log target transform.
 - [ ] Test a Poisson or Tweedie objective.
-- [ ] Tune hyperparameters after the baseline is stable.
+- [x] Tune hyperparameters after the baseline is stable.
 - [ ] Use permutation importance or SHAP to confirm feature value.
 
 ## 5. Leakage controls
@@ -205,12 +210,42 @@ Exclude `Type_of_order`, `day_of_week`, `is_weekend`,
 `courier_delivery_count`, `Time_Order_picked`, and `prep_min` from the first
 baseline. Add them back only if validation shows a real improvement.
 
-## 7. Open decisions
+## 7. Open questions
 
-- [ ] Confirm the target definition: order-to-delivery or pickup-to-delivery.
-- [ ] Decide whether invalid-coordinate rows stay in training or are excluded.
-- [ ] Decide whether to repair sign-flipped coordinates with `abs()`.
-- [ ] Decide whether `festival_missing` is a legitimate feature or a data
-      artifact.
-- [ ] Decide whether ratings above 5.0 are errors, a different scale, or valid.
-- [ ] Decide whether courier ages below 18 are invalid or legitimate.
+- [x] Confirm whether `Time_taken (min)` starts at order placement or pickup.
+
+The invalid-coordinate, sign-flipped-coordinate, and `festival_missing`
+decisions are already covered by the cleaning and ablation tasks in sections
+1–4, so they do not need separate open questions.
+
+Optional data-understanding checks:
+
+- [x] Confirm the source or meaning of ratings above 5.0; current handling is to
+      flag them and test clipping versus retention.
+- [x] Confirm the source or meaning of courier ages below 18; current handling
+      is to flag them and test clipping.
+
+### Meaning of `Time_taken (min)`
+
+Here's what's stated in the Kaggle page:
+
+```
+Time taken for delivery in minutes
+```
+
+This is pretty ambiguous language but to me it makes more sense to start measuring the
+time taken an the time of order placement so that's what we'll do.
+
+### Source or meaning of ratings above 5.0
+
+Since the vast majority of the ratings fell within the 0-5 range I have to assume that any
+rating above 5.0 was the result of some sort of error whether it be system error (i.e.,
+the mobile app bugged out) or user error (i.e., maybe the mobile app allows users to enter
+a rating on in a text field and somehow ratings above 5.0 got past the validation). I
+think we stick with the current plan of flagging them and testing clipping.
+
+### Source or meaning of courier ages below 18
+
+It could be that somehow people who are effectively minors were able to get this job.
+While technically illegal in many places, the fact is that they're still allowed to work
+at this company so I say we flag them and test clipping.

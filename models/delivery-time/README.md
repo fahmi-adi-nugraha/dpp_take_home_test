@@ -40,19 +40,39 @@ data/raw/zomato/
 The manifest records the source URL, download timestamp, archive size and
 SHA-256, CSV row count and columns, and target column.
 
-## Planned workflow
+## Workflow
 
 1. Fetch the dataset with `httpx` and store it under `data/raw/zomato/`.
 2. Explore the data in `notebooks/01_eda.py` using Polars and plotnine.
-3. Clean and preprocess the data in `data.py` and `features.py`.
-4. Train an XGBoost model wrapped in a scikit-learn `Pipeline` in `train.py`.
-5. Evaluate the model in `evaluate.py` and `notebooks/02_modeling.py`.
-6. Export the trained pipeline and metadata under `artifacts/` for the API.
+3. Clean and standardize the data in `notebooks/02_data_cleaning.py` using the
+   functions in `src/delivery_time/data.py`.
+4. Build the semantic feature frame in
+   `notebooks/03_feature_engineering.py` using `src/delivery_time/features.py`.
+5. Train an XGBoost model wrapped in a scikit-learn `Pipeline` in
+   `notebooks/04_model_training.py` and `train.py`.
+6. Evaluate the model in `evaluate.py` and the training notebook.
+7. Export the trained pipeline and metadata under `artifacts/` for the API.
+
+## Processed outputs
+
+```text
+data/processed/
+├── zomato_clean.parquet
+├── zomato_clean.csv
+├── zomato_clean_manifest.json
+├── zomato_features.parquet
+├── zomato_features.csv
+└── zomato_features_manifest.json
+```
+
+Parquet is the canonical typed artifact. CSV copies are provided for
+inspection. Processed data and manifests are generated locally and are ignored
+by Git.
 
 ## Layout
 
-- `src/delivery_time/`: importable package and CLI entry points.
-- `notebooks/`: marimo notebooks for EDA and modeling.
+- `src/delivery_time/`: importable package, cleaning/feature logic, and CLI entry points.
+- `notebooks/`: marimo notebooks for EDA, data cleaning, feature engineering, and model training.
 - `data/raw/`, `data/interim/`, `data/processed/`: local dataset stages.
 - `artifacts/`: trained model and metadata; not committed.
 - `tests/`: package tests.
@@ -73,6 +93,9 @@ uv run fetch-delivery-data --force
 uv run fetch-delivery-data --output-dir /tmp/zomato --verbose
 
 uv run marimo edit models/delivery-time/notebooks/01_eda.py
+uv run marimo edit models/delivery-time/notebooks/02_data_cleaning.py
+uv run marimo edit models/delivery-time/notebooks/03_feature_engineering.py
+uv run marimo edit models/delivery-time/notebooks/04_model_training.py
 uv run train-delivery-model
 uv run pytest models/delivery-time/tests
 ```
@@ -88,5 +111,5 @@ The API reads the model through `DELIVERY_MODEL_PATH`, defaulting to
 
 ## Status
 
-Data fetching is implemented. EDA, preprocessing, training, evaluation, and
-API integration remain placeholders.
+Data fetching, EDA, data cleaning, and feature engineering are implemented.
+Model training, evaluation, and API integration remain placeholders.

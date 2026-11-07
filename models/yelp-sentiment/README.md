@@ -81,5 +81,6 @@ The API reads the model through `SENTIMENT_MODEL_PATH`, defaulting to
 
 ## Status
 
-Data fetching and validation are implemented. EDA, preprocessing, fine-tuning,
-evaluation, and API integration remain to be implemented.
+Data fetching, validation, data dictionary, and EDA are implemented.
+Preprocessing, fine-tuning, evaluation, and API integration remain to be
+implemented. The EDA report is `notebooks/01_eda.py`.

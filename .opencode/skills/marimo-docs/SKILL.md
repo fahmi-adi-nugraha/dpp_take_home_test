@@ -92,9 +92,11 @@ Use this order unless there is a strong reason to differ:
    - Problems identified and proposed fixes.
    - Potential features.
    - Potential feature engineering methods.
-   - Remaining open questions.
+   - Unresolved questions are moved to the temporary checklist, not included in the report.
 
 ## Writing style
+
+Write the report in the **first-person plural**, as a group: use “we”, “we'll”, and “our” rather than “I”, “I'll”, and “my”. For example, write “We'll start with the schema” rather than “I start with the schema”.
 
 Keep prose brief and decision-oriented. Observations should explain:
 
@@ -104,20 +106,19 @@ Keep prose brief and decision-oriented. Observations should explain:
 - what cleaning or feature-engineering step could address it,
 - whether a feature should be kept, dropped, or tested.
 
-Place observations directly under the table/plot group they reference. Do not
-put them in a dedicated “What I notice” section. Do not add an observation
-under every cell; group related cells and comment once per group.
+Place observations directly under the table/plot group they reference. Do not put them in a dedicated “what we notice” section. Do not add an observation under every cell; group related cells and comment once per group.
 
-Use plain paragraphs, not a recurring bold heading. Example:
+Use plain paragraphs, not a recurring bold heading. Write each Markdown paragraph on one continuous line; do not hard-wrap prose at 80–90 characters. Let the report renderer handle line width. Example:
 
 ```markdown
-Traffic and weather both matter. Low traffic has a median around 20 minutes
-while Jam is around 31; Sunny weather is around 20 while Fog and Cloudy are
-around 28. Traffic should be ordinal, and weather should be categorical.
+Traffic and weather both matter. Low traffic has a median around 20.00 minutes while Jam is around 31.00; Sunny weather is around 20.00 while Fog and Cloudy are around 28.00. Traffic should be ordinal, and weather should be categorical.
 ```
 
-Avoid deep dives, long derivations, and restating the code. The notebook is a
-report, not a lab log.
+If a numeric value is the last word before a period and a line break would put the number at the start of the next line, escape the period (for example, `479\.`) so Markdown does not interpret it as an ordered-list marker. Keeping paragraphs on continuous lines is the preferred fix.
+
+Round displayed numeric values to **two decimal places**, including numbers in tables derived from dataframes. Counts may remain integers, but percentages and floating-point statistics should use two decimals.
+
+Avoid deep dives, long derivations, and restating the code. The notebook is a report, not a lab log.
 
 ## Marimo mechanics
 
@@ -205,9 +206,12 @@ object. Generated images belong in an ignored directory such as
 - Then check missing values and duplicates.
 - Then analyze relationships, time patterns, distance/geospatial behavior,
   missingness patterns, and correlation.
-- End with a summary of problems/fixes, potential features, and feature
-  engineering.
+- End with a summary of problems/fixes, potential features, and feature engineering.
 - Keep an observation after each related group of tables/plots.
+
+### EDA open questions
+
+Do not include an “Open questions” section in the EDA report. Put unresolved questions in an untracked `feature_engineering_checklist.md` file at the model project root. That checklist is a temporary working document for the data scientist only; it is not a project artifact and is discarded at the end of the modeling phase. Do not link to it or mention its path in notebooks, READMEs, code, comments, commit messages, or any other documentation.
 
 ## Data cleaning documentation
 
@@ -374,7 +378,12 @@ Also check:
 - no duplicated top-level non-underscore variables,
 - no commented-out scaffolding or backup files in the report,
 - observations are placed under the relevant table/plot group,
-- summary includes problems, features, engineering methods, and open questions.
+- prose uses first-person plural (“we”), not “I”,
+- Markdown paragraphs are written on continuous lines rather than hard-wrapped,
+- displayed numeric values are rounded to two decimal places,
+- summary includes problems, features, and engineering methods but no open-questions section,
+- unresolved EDA questions live in the temporary untracked checklist,
+- no notebook, README, code, comment, or other documentation references the temporary checklist.
 
 ## References
 

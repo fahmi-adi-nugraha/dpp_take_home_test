@@ -47,6 +47,7 @@ __marimo__/
 
 # Generated EDA images
 models/delivery-time/notebooks/imgs/
+models/yelp-sentiment/notebooks/imgs/
 
 # OS / editor
 .DS_Store

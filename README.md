@@ -6,9 +6,9 @@ workspace.
 
 > **Status:** classical ML data fetching, EDA, data cleaning, feature
 > engineering, model training, and evaluation are implemented. NLP data
-> fetching is implemented; NLP training/evaluation, API behavior, and the
-> remaining tests are not implemented yet. The commands below describe the
-> intended workflow.
+> fetching and EDA are implemented; NLP preprocessing/training/evaluation, API
+> behavior, and the remaining tests are not implemented yet. The commands below
+> describe the intended workflow.
 
 ## Projects
 
@@ -171,10 +171,10 @@ intended future slot for the optional UI.
 ## Scope and status
 
 Classical ML data fetching, EDA, data cleaning, feature engineering, model
-training, and evaluation are implemented. NLP data fetching is implemented.
-Still pending:
+training, and evaluation are implemented. NLP data fetching and EDA are
+implemented. Still pending:
 
-- NLP EDA, preprocessing, training, and evaluation
+- NLP preprocessing, training, and evaluation
 - API logic
 - optional Streamlit UI
 - final report and presentation

@@ -248,11 +248,9 @@ def _(pl, results):
 ### Feature engineering methods
 
 - ...
-
-### Open questions
-
-- ...
 ```
+
+Do not add an “Open questions” section. Move unresolved questions to the temporary `feature_engineering_checklist.md` working file at the model project root, and do not reference that file anywhere in the repository.
 
 ## Validation checklist
 
@@ -265,6 +263,10 @@ def _(pl, results):
 - [ ] Per-plot `figure_size` is set.
 - [ ] Shared objects are returned from the creating cell.
 - [ ] Observations appear under the relevant table/plot group.
-- [ ] Final summary covers problems, features, engineering methods, and open
-      questions.
+- [ ] Prose uses first-person plural (“we”), not “I”.
+- [ ] Markdown paragraphs use continuous lines instead of hard wrapping.
+- [ ] Displayed numbers are rounded to two decimal places.
+- [ ] Final summary covers problems, features, and engineering methods but has no open-questions section.
+- [ ] Unresolved EDA questions live only in the temporary untracked checklist.
+- [ ] The temporary checklist is not referenced in code or documentation.
 - [ ] `uv run marimo export html <notebook>.py -o /tmp/notebook.html` succeeds.

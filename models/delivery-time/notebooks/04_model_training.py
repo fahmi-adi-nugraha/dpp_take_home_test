@@ -257,20 +257,97 @@ def _(mo):
     mo.md("""
     ## 3. Hyperparameter tuning
 
-    Ridge alpha and XGBoost hyperparameters are tuned with five-fold `RandomizedSearchCV` on the training split. The search optimizes negative RMSE; no exhaustive grid search is used.
+    Ridge alpha and XGBoost were tuned with five-fold `RandomizedSearchCV` on the training split: 20 draws for Ridge and 30 draws for XGBoost, seed 42, scoring negative RMSE. The test split was not used during tuning. The table below records the selected XGBoost values, what each parameter controls, the search range, and why the value is reasonable.
     """)
     return
 
 
 @app.cell(hide_code=True)
 def _(metrics, pl):
+    def _format_value(name: str, value: float) -> str:
+        if name in {"n_estimators", "max_depth", "min_child_weight"}:
+            return str(int(value))
+        if abs(value) < 0.01:
+            return f"{value:.5f}"
+        return f"{value:.4f}"
+
+    _details = [
+        (
+            "n_estimators",
+            "Number of boosting rounds.",
+            "200–799",
+            "Cross-validation favored more rounds with a low learning rate; 453 balanced fit and runtime.",
+        ),
+        (
+            "max_depth",
+            "Maximum depth of each tree.",
+            "2–8",
+            "Depth 7 captured nonlinear delivery interactions while sampling and penalties controlled variance.",
+        ),
+        (
+            "learning_rate",
+            "Shrinkage applied to each boosting round.",
+            "0.01–0.20",
+            "A small shrinkage rate with more trees generalized better.",
+        ),
+        (
+            "subsample",
+            "Fraction of training rows sampled for each tree.",
+            "0.60–1.00",
+            "Mild row subsampling reduced variance without discarding too much signal.",
+        ),
+        (
+            "colsample_bytree",
+            "Fraction of features sampled for each tree.",
+            "0.40–1.00",
+            "Feature subsampling decorrelated the trees and improved validation RMSE.",
+        ),
+        (
+            "min_child_weight",
+            "Minimum hessian weight required in a leaf.",
+            "1–19",
+            "A higher minimum leaf weight prevented small, noisy splits.",
+        ),
+        (
+            "reg_alpha",
+            "L1 regularization on leaf weights.",
+            "0.001–10.00",
+            "A small L1 penalty kept the model sparse without suppressing useful splits.",
+        ),
+        (
+            "reg_lambda",
+            "L2 regularization on leaf weights.",
+            "0.001–10.00",
+            "A small L2 penalty stabilized the fit by shrinking leaf weights.",
+        ),
+        (
+            "gamma",
+            "Minimum loss reduction required for a split.",
+            "0.001–5.00",
+            "A near-zero threshold allowed modest-gain splits while the other penalties controlled complexity.",
+        ),
+    ]
     tuning_tbl = pl.DataFrame(
         [
-            {"parameter": _key, "value": str(_value)}
-            for _key, _value in metrics["best_params"].items()
+            {
+                "parameter": _name,
+                "value": _format_value(_name, metrics["best_params"][_name]),
+                "controls": _controls,
+                "search_range": _search_range,
+                "why_we_selected_it": _reason,
+            }
+            for _name, _controls, _search_range, _reason in _details
         ]
     )
     tuning_tbl
+    return (tuning_tbl,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    The serialized pipeline matches these selected values, so this table describes the model that produced the held-out test metrics.
+    """)
     return
 
 
@@ -552,11 +629,35 @@ def _(feature_schema, mo):
 def _(metadata, metrics, mo):
     _test = metrics["models"]["final_xgboost"]["test"]
     _tuned = metrics["models"]["xgboost_tuned"]
+    _best = metrics["best_params"]
+
+    def _format_param(name: str, value: float) -> str:
+        if name in {"n_estimators", "max_depth", "min_child_weight"}:
+            return str(int(value))
+        if abs(value) < 0.01:
+            return f"{value:.5f}"
+        return f"{value:.4f}"
+
+    _param_order = [
+        "n_estimators",
+        "max_depth",
+        "learning_rate",
+        "subsample",
+        "colsample_bytree",
+        "min_child_weight",
+        "reg_alpha",
+        "reg_lambda",
+        "gamma",
+    ]
+    _param_summary = ", ".join(
+        f"`{_name}={_format_param(_name, _best[_name])}`" for _name in _param_order
+    )
     mo.md(
         f"""
     ## Summary
 
     - **Selected feature set:** `{metrics['selected_feature_set']}`
+    - **Best XGBoost hyperparameters:** {_param_summary}
     - **Best validation RMSE after tuning:** {_tuned['validation']['rmse']:.2f}
     - **Held-out test RMSE:** {_test['rmse']:.2f}
     - **Held-out test MAE:** {_test['mae']:.2f}

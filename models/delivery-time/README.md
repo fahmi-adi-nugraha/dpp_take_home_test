@@ -141,7 +141,16 @@ Artifacts:
 The API reads the model through `DELIVERY_MODEL_PATH`, defaulting to
 `models/delivery-time/artifacts/model.joblib`.
 
+## API integration
+
+The delivery-time model is served by `POST /predict/delivery-time` in the local
+FastAPI app. The endpoint accepts raw order, location, and courier inputs,
+constructs the 18 selected features in `src/delivery_time/inference.py`, and
+returns the predicted minutes plus any input-quality warnings. See
+[`../../apps/api/README.md`](../../apps/api/README.md) for the request contract
+and run command.
+
 ## Status
 
-Data fetching, EDA, data cleaning, feature engineering, model training, and
-evaluation are implemented. API integration remains a placeholder.
+Data fetching, EDA, data cleaning, feature engineering, model training,
+evaluation, and delivery-time API integration are implemented.

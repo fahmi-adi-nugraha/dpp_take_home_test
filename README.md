@@ -4,9 +4,10 @@ Monorepo for the DPP DSML take-home test. It contains two independent ML
 projects and a local FastAPI inference service, managed as a single `uv`
 workspace.
 
-> **Status:** both model projects now have completed data preparation, training,
-> evaluation, and reports. The local FastAPI service is still a placeholder.
-> The commands below describe the intended workflow.
+> **Status:** both model projects have completed data preparation, training,
+> evaluation, and reports. The delivery-time REST endpoint is implemented; the
+> sentiment endpoint is scaffolded and returns `501` until the Yelp model is
+> integrated.
 
 ## Projects
 
@@ -98,14 +99,14 @@ uv sync --all-packages
 uv run python -c "import delivery_time, yelp_sentiment, inference_api"
 ```
 
-Intended commands once implementation is complete:
+Run the local API and tests:
 
 ```bash
 uv run uvicorn inference_api.main:app --reload
 uv run pytest
 ```
 
-The API will be available at `http://127.0.0.1:8000`, with interactive docs at
+The API is available at `http://127.0.0.1:8000`, with interactive docs at
 `http://127.0.0.1:8000/docs`.
 
 ## Data setup
@@ -170,9 +171,10 @@ intended future slot for the optional UI.
 
 Classical ML data fetching, EDA, data cleaning, feature engineering, model
 training, and evaluation are implemented. NLP data fetching, EDA, cleaning,
-feature engineering, training, and evaluation are implemented. Still pending:
+feature engineering, training, and evaluation are implemented. The delivery-time
+REST endpoint is implemented. Still pending:
 
-- API logic
+- sentiment API integration
 - optional Streamlit UI
 - final report and presentation
 

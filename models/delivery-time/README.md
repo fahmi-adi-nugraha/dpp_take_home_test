@@ -103,7 +103,13 @@ uv run pytest models/delivery-time/tests
 
 The training command runs an 80/10/10 random split, a Ridge linear baseline, a feature ablation over the baseline feature set, and randomized hyperparameter tuning for XGBoost. Ridge alpha and XGBoost were tuned with five-fold `RandomizedSearchCV` (20 and 30 draws, seed 42, negative RMSE). The selected feature set currently includes grouped weather (`weather_group`) based on validation RMSE. The final XGBoost model was refit on train + validation and evaluated once on test.
 
-### Best hyperparameters
+### Final metrics and best hyperparameters
+
+| Stage | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| 5-fold CV, tuned XGBoost | 3.92 | — | — |
+| Validation, tuned XGBoost | 3.87 | 3.07 | 0.83 |
+| Test, final refit | 4.01 | 3.16 | 0.82 |
 
 The XGBoost search space covered `n_estimators` 200–799, `max_depth` 2–8, `learning_rate` 0.01–0.20, `subsample` 0.60–1.00, `colsample_bytree` 0.40–1.00, `min_child_weight` 1–19, `reg_alpha` and `reg_lambda` 0.001–10.00, and `gamma` 0.001–5.00.
 
@@ -120,14 +126,6 @@ The final model uses the following values. They are saved in `artifacts/metrics.
 | `reg_alpha` | 0.00109 | L1 regularization on leaf weights. | A small L1 penalty kept the model sparse without suppressing useful splits. |
 | `reg_lambda` | 0.00255 | L2 regularization on leaf weights. | A small L2 penalty stabilized the fit by shrinking leaf weights. |
 | `gamma` | 0.00205 | Minimum loss reduction required for a split. | A near-zero threshold allowed modest-gain splits while the other penalties controlled complexity. |
-
-### Final metrics
-
-| Stage | RMSE | MAE | R² |
-|---|---:|---:|---:|
-| 5-fold CV, tuned XGBoost | 3.92 | — | — |
-| Validation, tuned XGBoost | 3.87 | 3.07 | 0.83 |
-| Test, final refit | 4.01 | 3.16 | 0.82 |
 
 Artifacts:
 

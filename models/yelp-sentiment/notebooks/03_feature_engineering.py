@@ -296,7 +296,7 @@ def _(THEME, p9, save_plot, token_sample):
 def _(mo, token_stats):
     mo.md(
         f"""
-        The cleaned sample has a median of {token_stats["median"]:.2f} tokens and a 95th percentile of {token_stats["p95"]:.2f}. About {token_stats["share_over_256_pct"]:.2f}% of reviews exceed 256 tokens and {token_stats["share_over_512_pct"]:.2f}% exceed 512. The 256-token fast baseline and 512-token final candidate remain appropriate.
+        The cleaned sample has a median of {token_stats["median"]:.2f} tokens and a 95th percentile of {token_stats["p95"]:.2f}. About {token_stats["share_over_256_pct"]:.2f}% of reviews exceed 256 tokens and {token_stats["share_over_512_pct"]:.2f}% exceed 512. The reduced training run fixes the sequence length at 256; a 512-token configuration remains available for a later ablation.
         """
     )
     return
@@ -327,6 +327,91 @@ def _(feature_artifacts, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
+    ## 4. Reduced modeling sample
+
+    The full feature frame is retained for reference, but the model training run uses a stratified subset. The test split stays complete so the final evaluation remains reliable. We keep 200,000 training reviews and 20,000 validation reviews, which gives 40,000 training examples per class before validation.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(feature_frame, features):
+    model_frame = features.build_reduced_feature_frame(feature_frame)
+    return (model_frame,)
+
+
+@app.cell(hide_code=True)
+def _(features, model_frame, pl):
+    _counts = features.split_counts(model_frame)
+    model_split_tbl = pl.DataFrame(
+        [{"split": split, "rows": count} for split, count in sorted(_counts.items())]
+    )
+    model_split_tbl
+    return (model_split_tbl,)
+
+
+@app.cell(hide_code=True)
+def _(config, model_frame, pl):
+    model_label_tbl = (
+        model_frame.group_by("split", "label")
+        .len()
+        .with_columns(
+            pl.col("label")
+            .replace_strict(config.LABEL_MAP, return_dtype=pl.String)
+            .alias("label_name")
+        )
+        .sort("split", "label")
+        .select("split", "label_name", "len")
+    )
+    model_label_tbl
+    return (model_label_tbl,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    The reduced split is 200,000 train reviews, 20,000 validation reviews, and the full 50,000 test reviews. Stratified sampling keeps the five classes balanced, and the test split is unchanged from the full feature frame.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(config, features, model_frame, token_stats):
+    model_feature_artifacts = features.write_feature_artifacts(
+        model_frame,
+        token_stats=token_stats,
+        parquet_path=config.MODEL_FEATURES_PARQUET,
+        manifest_path=config.MODEL_FEATURES_MANIFEST_PATH,
+        source_feature_manifest_path=config.FEATURES_MANIFEST_PATH,
+    )
+    return (model_feature_artifacts,)
+
+
+@app.cell(hide_code=True)
+def _(model_feature_artifacts, pl):
+    model_artifacts_tbl = pl.DataFrame(
+        [
+            {
+                "artifact": "model feature parquet",
+                "path": str(model_feature_artifacts.parquet_path),
+            },
+            {
+                "artifact": "model feature manifest",
+                "path": str(model_feature_artifacts.manifest_path),
+            },
+            {
+                "artifact": "model rows",
+                "path": f"{model_feature_artifacts.manifest['output']['rows']:,}",
+            },
+        ]
+    )
+    model_artifacts_tbl
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
     ## Summary
 
     ### Final feature set
@@ -344,11 +429,14 @@ def _(mo):
 
     ### Output
 
-    - Feature rows: 699,929
-    - Split: 584,936 train / 64,993 validation / 50,000 test
+    - Full feature rows: 699,929
+    - Full split: 584,936 train / 64,993 validation / 50,000 test
+    - Reduced model rows: 270,000
+    - Reduced split: 200,000 train / 20,000 validation / 50,000 test
     - Test overlap: 0
-    - Output: `data/processed/yelp_features.parquet`
-    - Manifest: `data/processed/yelp_features_manifest.json`
+    - Full output: `data/processed/yelp_features.parquet`
+    - Reduced output: `data/processed/yelp_features_model.parquet`
+    - Manifests: `yelp_features_manifest.json` and `yelp_features_model_manifest.json`
     """)
     return
 

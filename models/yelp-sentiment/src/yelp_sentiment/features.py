@@ -64,6 +64,48 @@ def validate_clean_frame(frame: pl.DataFrame) -> None:
         raise FeatureError(f"Unexpected input splits: {sorted(splits)}")
 
 
+def stratified_sample(
+    frame: pl.DataFrame,
+    n_rows: int,
+    *,
+    seed: int = config.RANDOM_SEED,
+) -> pl.DataFrame:
+    """Take a class-stratified sample, or return the frame when small enough."""
+    if n_rows >= frame.height:
+        return frame
+    labels = frame[config.TARGET_COLUMN].to_numpy()
+    indices = np.arange(frame.height)
+    sampled_indices, _ = train_test_split(
+        indices,
+        train_size=n_rows,
+        random_state=seed,
+        stratify=labels,
+    )
+    return frame[np.sort(sampled_indices)]
+
+
+def build_reduced_feature_frame(
+    full_frame: pl.DataFrame,
+    *,
+    train_rows: int = config.MODEL_TRAIN_ROWS,
+    validation_rows: int = config.MODEL_VALIDATION_ROWS,
+    seed: int = config.RANDOM_SEED,
+) -> pl.DataFrame:
+    """Reduce train and validation while preserving the full test split."""
+    train = stratified_sample(
+        full_frame.filter(pl.col(config.SPLIT_COLUMN) == "train"),
+        train_rows,
+        seed=seed,
+    )
+    validation = stratified_sample(
+        full_frame.filter(pl.col(config.SPLIT_COLUMN) == "validation"),
+        validation_rows,
+        seed=seed + 1,
+    )
+    test = full_frame.filter(pl.col(config.SPLIT_COLUMN) == "test")
+    return pl.concat([train, validation, test])
+
+
 def assign_splits(
     clean_frame: pl.DataFrame,
     *,
@@ -199,6 +241,7 @@ def write_feature_artifacts(
     parquet_path: Path = config.FEATURES_DATA_PARQUET,
     manifest_path: Path = config.FEATURES_MANIFEST_PATH,
     cleaning_manifest_path: Path = config.CLEAN_MANIFEST_PATH,
+    source_feature_manifest_path: Path | None = None,
 ) -> FeatureArtifacts:
     """Write the model-ready feature frame and manifest."""
     expected_splits = {"train", "validation", "test"}
@@ -218,6 +261,11 @@ def write_feature_artifacts(
     cleaning_manifest_sha = (
         sha256_file(cleaning_manifest_path) if cleaning_manifest_path.exists() else None
     )
+    source_feature_manifest_sha = (
+        sha256_file(source_feature_manifest_path)
+        if source_feature_manifest_path is not None and source_feature_manifest_path.exists()
+        else None
+    )
     manifest: dict[str, Any] = {
         "dataset": config.DATASET_ID,
         "source_revision": config.DATASET_REVISION,
@@ -225,6 +273,7 @@ def write_feature_artifacts(
         "created_at_utc": datetime.now(UTC).isoformat(),
         "label_map": {str(key): value for key, value in sorted(config.LABEL_MAP.items())},
         "cleaning_manifest_sha256": cleaning_manifest_sha,
+        "source_feature_manifest_sha256": source_feature_manifest_sha,
         "output": {
             "path": _project_relative(parquet_path),
             "rows": frame.height,
@@ -249,7 +298,16 @@ def write_feature_artifacts(
 
 
 def load_features(path: Path = config.FEATURES_DATA_PARQUET) -> pl.DataFrame:
-    """Load the model-ready feature frame."""
+    """Load the full model-ready feature frame."""
     if not path.is_file():
         raise FeatureError(f"Feature dataset not found: {path}. Run the feature notebook first.")
+    return pl.read_parquet(path)
+
+
+def load_model_features(path: Path = config.MODEL_FEATURES_PARQUET) -> pl.DataFrame:
+    """Load the reduced feature frame used for model training."""
+    if not path.is_file():
+        raise FeatureError(
+            f"Reduced feature dataset not found: {path}. Run the feature notebook first."
+        )
     return pl.read_parquet(path)

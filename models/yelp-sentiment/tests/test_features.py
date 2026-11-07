@@ -44,6 +44,24 @@ def test_assign_splits_is_stratified_and_keeps_test() -> None:
     assert sum(label_counts["validation"].values()) == 10
 
 
+def test_build_reduced_feature_frame_keeps_test() -> None:
+    prepared = features.assign_splits(make_clean_frame(), validation_fraction=0.1, seed=42)
+
+    reduced = features.build_reduced_feature_frame(
+        prepared,
+        train_rows=40,
+        validation_rows=10,
+        seed=42,
+    )
+
+    counts = features.split_counts(reduced)
+    assert counts == {"test": 20, "train": 40, "validation": 10}
+    assert (
+        reduced.filter(pl.col("split") == "test")["review_id"].to_list()
+        == prepared.filter(pl.col("split") == "test")["review_id"].to_list()
+    )
+
+
 def test_leakage_summary_detects_overlap() -> None:
     frame = pl.DataFrame(
         {

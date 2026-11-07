@@ -12,11 +12,14 @@ dependencies = [
     "httpx",
     "transformers",
     "torch",
+    "accelerate>=1.15.0",
+    "ray[tune]>=2.60.0",
 ]
 
 [project.scripts]
 fetch-sentiment-data = "yelp_sentiment.fetch:main"
 train-sentiment-model = "yelp_sentiment.train:main"
+evaluate-sentiment-models = "yelp_sentiment.evaluate:main"
 
 [build-system]
 requires = ["uv_build>=0.13.7,<0.14"]

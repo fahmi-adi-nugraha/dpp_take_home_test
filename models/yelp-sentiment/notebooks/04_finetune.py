@@ -308,6 +308,14 @@ def _(bert_history, pl):
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    The final BERT refit trains on the reduced train + validation frame. Its per-epoch validation scores are therefore diagnostic only; the held-out test scores are reported in the evaluation notebook.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(THEME, bert_history, p9, pl, save_plot):
     _plot_df = pl.DataFrame(bert_history["history"])
     _plot = (
@@ -318,7 +326,7 @@ def _(THEME, bert_history, p9, pl, save_plot):
         + p9.theme(figure_size=(7, 4))
         + p9.labs(
             title="Final BERT refit history",
-            subtitle="Validation macro F1 by epoch; the final refit uses the reduced train + validation frame",
+            subtitle="Validation-set macro F1 by epoch; validation was merged into the refit training frame, so these are not held-out scores",
             x="Epoch",
             y="Macro F1",
         )

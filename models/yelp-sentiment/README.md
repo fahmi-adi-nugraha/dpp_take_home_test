@@ -2,8 +2,9 @@
 
 ## Overview
 
-NLP sentiment classification project. The planned model is a BERT-family model
-fine-tuned with Hugging Face `transformers`.
+NLP sentiment classification project. We fine-tune a BERT-family model with
+Hugging Face `transformers` and compare it with a TF-IDF logistic regression
+baseline.
 
 ## Dataset
 
@@ -23,24 +24,24 @@ checksums, schema, row counts, and labels.
 | train | 650,000 | 5 balanced classes |
 | test | 50,000 | 5 balanced classes |
 
-The raw labels are `0–4`, corresponding to 1–5 stars. The final sentiment label
-mapping (five-class or collapsed binary) must be confirmed during EDA. A
-`fetch-manifest.json` records file sizes, SHA-256 hashes, row counts, label
-counts, and the dataset revision.
+The raw labels are `0–4`, corresponding to 1–5 stars. We keep the five-class
+target. A `fetch-manifest.json` records file sizes, SHA-256 hashes, row counts,
+label counts, and the dataset revision.
 
 ## Target and metrics
 
-- **Target:** review sentiment derived from star ratings.
-- **Planned metrics:** accuracy, macro F1, and per-class precision/recall.
+- **Target:** five-class review sentiment derived from star ratings.
+- **Metrics:** accuracy, macro F1, weighted F1, and per-class precision/recall.
+- **Primary metric:** macro F1 because each star rating is weighted equally.
 
-## Planned workflow
+## Workflow
 
 1. Fetch the dataset with `httpx` and store it under `data/raw/`.
 2. Explore the data in `notebooks/01_eda.py` using Polars and plotnine.
 3. Clean and decode the text in `notebooks/02_data_cleaning.py`.
-4. Build splits and define tokenization in `notebooks/03_feature_engineering.py`.
-5. Tokenize and fine-tune the model in `train.py` and `notebooks/04_finetune.py`.
-6. Evaluate the model in `evaluate.py` and `notebooks/05_evaluate.py`.
+4. Build the reduced modeling split in `notebooks/03_feature_engineering.py`.
+5. Tune and fine-tune the models in `train.py` and `notebooks/04_finetune.py`.
+6. Evaluate the final models in `evaluate.py` and `notebooks/05_evaluate.py`.
 7. Export the model and tokenizer under `artifacts/` for the API.
 
 ## Layout
@@ -62,6 +63,7 @@ uv run marimo edit models/yelp-sentiment/notebooks/03_feature_engineering.py
 uv run marimo edit models/yelp-sentiment/notebooks/04_finetune.py
 uv run marimo edit models/yelp-sentiment/notebooks/05_evaluate.py
 uv run train-sentiment-model
+uv run evaluate-sentiment-models
 uv run pytest models/yelp-sentiment/tests
 ```
 
@@ -73,16 +75,46 @@ uv run fetch-sentiment-data --revision main
 uv run fetch-sentiment-data --output-dir /tmp/yelp-raw
 ```
 
+## Training and evaluation
+
+We use a reduced stratified hold-out split: **200,000** training rows,
+**20,000** validation rows, and the full **50,000**-row test split. Ray Tune
+`ASHAScheduler` tunes the models with validation macro F1 as the objective:
+20 trials for the logistic baseline and 8 trials for BERT. Final models are
+refit on the reduced train + validation frame; the test split is untouched
+until evaluation.
+
+### Final test results
+
+| Model | Accuracy | Macro F1 | Weighted F1 |
+|---|---:|---:|---:|
+| TF-IDF logistic regression | 0.58 | 0.58 | 0.58 |
+| BERT | 0.68 | 0.67 | 0.67 |
+
+BERT is the stronger model, especially on the 1-star and 5-star classes. The
+middle classes remain the hardest.
+
+The selected BERT configuration uses `learning_rate=4.6878e-05`,
+`per_device_train_batch_size=16`, `gradient_accumulation_steps=1`,
+`weight_decay=0.1`, `warmup_ratio=0.06`, a linear scheduler, label smoothing
+`0.1`, dropout `0.2/0.1`, `max_length=256`, and 3 epochs. Exact parameter sets
+and trial histories are stored in the artifact directories.
+
 ## Artifact contract
 
-- `artifacts/model/`: Hugging Face `save_pretrained` output plus tokenizer
-  files.
-- `artifacts/metrics.json`: evaluation metrics.
-- `artifacts/label_map.json`: class index to label mapping.
+- `artifacts/logistic/`: TF-IDF logistic best parameters, fitted pipeline,
+  tuning trials, and validation metrics.
+- `artifacts/bert/`: Hugging Face `save_pretrained` model plus tokenizer,
+  best parameters, training history, tuning trials, and validation metrics.
+- `artifacts/evaluation/`: final test metrics, per-class metrics, confusion
+  matrices, hyperparameter table, test predictions, and comparison report.
 
-The API reads the model through `SENTIMENT_MODEL_PATH`, defaulting to
-`models/yelp-sentiment/artifacts/model`.
+The API reads the BERT model through `SENTIMENT_MODEL_PATH`, defaulting to
+`models/yelp-sentiment/artifacts/bert/model`.
 
 ## Status
 
-Data fetching, validation, data dictionary, EDA, data cleaning, and feature engineering are implemented. Fine-tuning, evaluation, and API integration remain to be implemented. The reports are `notebooks/01_eda.py`, `notebooks/02_data_cleaning.py`, and `notebooks/03_feature_engineering.py`.
+Data fetching, validation, data dictionary, EDA, data cleaning, feature
+engineering, fine-tuning, evaluation, and reports are implemented. The reports
+are `notebooks/01_eda.py` through `notebooks/05_evaluate.py`. API integration
+remains to be implemented.

@@ -4,11 +4,9 @@ Monorepo for the DPP DSML take-home test. It contains two independent ML
 projects and a local FastAPI inference service, managed as a single `uv`
 workspace.
 
-> **Status:** classical ML data fetching, EDA, data cleaning, feature
-> engineering, model training, and evaluation are implemented. NLP data
-> fetching, EDA, cleaning, and feature engineering are implemented; NLP
-> training/evaluation, API behavior, and the remaining tests are not implemented
-> yet. The commands below describe the intended workflow.
+> **Status:** both model projects now have completed data preparation, training,
+> evaluation, and reports. The local FastAPI service is still a placeholder.
+> The commands below describe the intended workflow.
 
 ## Projects
 
@@ -171,10 +169,9 @@ intended future slot for the optional UI.
 ## Scope and status
 
 Classical ML data fetching, EDA, data cleaning, feature engineering, model
-training, and evaluation are implemented. NLP data fetching, EDA, cleaning, and
-feature engineering are implemented. Still pending:
+training, and evaluation are implemented. NLP data fetching, EDA, cleaning,
+feature engineering, training, and evaluation are implemented. Still pending:
 
-- NLP training and evaluation
 - API logic
 - optional Streamlit UI
 - final report and presentation

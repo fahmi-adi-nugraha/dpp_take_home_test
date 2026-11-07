@@ -70,7 +70,7 @@ Use this order unless there is a strong reason to differ:
    - Dataset source and local snapshot.
    - Table of all features and what they mean.
    - Target feature called out explicitly.
-   - Links to the data dictionary and feature checklist.
+   - Links to the data dictionary and the current feature-decision record.
 
 2. **Data overview**
    - `raw.glimpse()`.
@@ -253,7 +253,7 @@ Required sections:
 7. **Output**
    - Path to the cleaned dataset.
    - Schema of the output.
-   - Link to the feature checklist and next notebook.
+   - Link to the current feature-decision record and next notebook.
 
 Do not just show a long code dump. Explain the decision behind each cleaning
 step and show how it was validated.
@@ -299,7 +299,7 @@ Required sections:
    - Ordered list of selected features.
    - Excluded features.
    - Output artifact path.
-   - Link to `feature_engineering_checklist.md`.
+   - Link to the data dictionary and any current feature-decision record.
 
 ## Model training documentation
 

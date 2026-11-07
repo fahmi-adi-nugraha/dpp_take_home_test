@@ -13,7 +13,6 @@ the Zomato Delivery Operations Analytics Dataset.
 - **Raw data location:** `data/raw/zomato/`
 - **Fetch command:** `uv run fetch-delivery-data`
 - **Data dictionary:** [DATA_DICTIONARY.md](DATA_DICTIONARY.md)
-- **Feature engineering checklist:** [feature_engineering_checklist.md](feature_engineering_checklist.md)
 - **Credentials:** optional. The dataset currently downloads anonymously. Set
   `KAGGLE_USERNAME` and `KAGGLE_KEY` in `.env` to use authenticated requests.
 
@@ -103,7 +102,7 @@ uv run pytest models/delivery-time/tests
 ## Training and evaluation
 
 The training command runs an 80/10/10 random split, a Ridge linear baseline, a
-checklist-driven feature ablation, and randomized hyperparameter tuning for
+feature ablation over the baseline feature set, and randomized hyperparameter tuning for
 XGBoost. The selected feature set currently includes grouped weather
 (`weather_group`) based on validation RMSE.
 

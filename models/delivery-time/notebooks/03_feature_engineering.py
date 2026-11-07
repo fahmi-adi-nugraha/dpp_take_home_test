@@ -24,7 +24,6 @@ def _(mo):
 
     - **Cleaned dataset:** `data/processed/zomato_clean.parquet`
     - **Data dictionary:** [`../DATA_DICTIONARY.md`](../DATA_DICTIONARY.md)
-    - **Feature checklist:** [`../feature_engineering_checklist.md`](../feature_engineering_checklist.md)
     """)
     return
 
@@ -185,7 +184,7 @@ def _(feature_set_table):
 def _(mo):
     mo.md("""
     The feature table separates the baseline from linear-only and optional
-    fields. The baseline follows the checklist; optional fields are available
+    fields. The baseline uses the minimal high-signal feature set; optional fields are available
     for ablations but are not part of the default model.
     """)
     return
@@ -408,7 +407,7 @@ def _(mo):
     mo.md("""
     ## 5. Feature sets and encoding plan
 
-    The baseline set follows the checklist. Linear-only extras are useful for a
+    The baseline set is the minimal high-signal feature set. Linear-only extras are useful for a
     linear model but are not part of the default tree model. Optional features
     remain available for ablations.
     """)

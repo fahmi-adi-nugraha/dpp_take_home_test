@@ -338,7 +338,7 @@ def build_ablation_specs() -> tuple[AblationSpec, ...]:
         AblationSpec(
             "baseline",
             baseline,
-            "Checklist baseline feature set.",
+            "Baseline feature set.",
         ),
         AblationSpec(
             "no_distance",
@@ -504,7 +504,7 @@ def select_best_ablation(
     *,
     min_improvement: float = 0.01,
 ) -> AblationSpec:
-    """Choose the best eligible ablation, preferring the checklist baseline."""
+    """Choose the best eligible ablation, preferring the baseline feature set."""
     baseline_rmse = results.filter(pl.col("name") == "baseline")["rmse"].item()
     eligible = results.filter(pl.col("eligible_for_final")).sort("rmse")
     best = eligible.row(0, named=True)

@@ -25,7 +25,6 @@ def _(mo):
     - **Raw file:** `data/raw/zomato/Zomato Dataset.csv`
     - **Target:** `Time_taken (min)`
     - **Field reference:** [`../DATA_DICTIONARY.md`](../DATA_DICTIONARY.md)
-    - **Feature decisions:** [`../feature_engineering_checklist.md`](../feature_engineering_checklist.md)
 
     ### Features
 
@@ -1593,8 +1592,8 @@ def _(mo):
       missingness separately.
     - Courier-level target encoding only with out-of-fold validation.
 
-    The selectable feature and engineering checklist is in
-    [`../feature_engineering_checklist.md`](../feature_engineering_checklist.md).
+    The feature engineering decisions are documented in the feature engineering
+    notebook.
     """)
     return
 

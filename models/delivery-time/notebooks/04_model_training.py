@@ -12,7 +12,7 @@ def _(mo):
     ## Objective
 
     Train a linear baseline and a tuned XGBoost regressor for order-time
-    delivery prediction, using the checklist baseline and validation-driven
+    delivery prediction, using the baseline feature set and validation-driven
     feature ablations.
 
     The training pipeline is implemented in
@@ -266,7 +266,7 @@ def _(ablation_results, mo, pl):
         **{abs(_best['delta_rmse_vs_baseline']):.3f}** improvement over the
         baseline. Dropping invalid-coordinate rows scores
         **{_invalid['rmse']:.3f}**, but it is diagnostic only because the
-        checklist keeps those rows with a validity flag. Removing distance is
+        cleaning policy keeps those rows with a validity flag. Removing distance is
         clearly harmful at **{_no_distance['rmse']:.3f}** RMSE.
         """
     )

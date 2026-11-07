@@ -23,7 +23,6 @@ def _(mo):
     - **Rows:** 45,584
     - **Columns:** 20
     - **Data dictionary:** [`../DATA_DICTIONARY.md`](../DATA_DICTIONARY.md)
-    - **Feature checklist:** [`../feature_engineering_checklist.md`](../feature_engineering_checklist.md)
 
     The cleaning notebook does not impute model features. It parses types,
     standardizes representations, flags anomalies, and preserves missing values

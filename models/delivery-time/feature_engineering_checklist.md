@@ -61,7 +61,8 @@ needed. `[ ]` marks optional or experimental work.
       is modest and bicycle is rare.
 - [ ] `vehicle_condition_is_zero` — binary split of condition 0 vs 1–3; useful
       for a linear baseline.
-- [ ] `weather_group` — collapse into clear, cloudy/fog, and storm/wind groups.
+- [x] `weather_group` — collapse into clear, cloudy/fog, and storm/wind groups;
+      selected into the final model by the validation ablation.
 - [ ] `day_of_week` — weak signal; keep only if validation improves.
 - [ ] `is_weekend` — no meaningful effect in the initial screen.
 - [x] `age_bin` — 5-year bins for a linear model; XGBoost can use raw age.
@@ -179,8 +180,8 @@ needed. `[ ]` marks optional or experimental work.
 - [x] Exclude any feature calculated from `Time_taken (min)`.
 - [x] Use out-of-fold encoding if courier-level historical target features are
       ever added.
-- [ ] Confirm whether `Time_taken (min)` starts at order placement or pickup.
-      This is still an open target-definition question.
+- [x] Confirmed: `Time_taken (min)` starts at order placement and ends at
+      delivery. See the target-definition note in section 7.
 
 ## 6. Recommended first baseline
 
@@ -209,6 +210,9 @@ multiple_missing
 Exclude `Type_of_order`, `day_of_week`, `is_weekend`,
 `courier_delivery_count`, `Time_Order_picked`, and `prep_min` from the first
 baseline. Add them back only if validation shows a real improvement.
+
+Validation note: the final training ablation added `weather_group` to this
+baseline after it produced the best eligible validation RMSE improvement.
 
 ## 7. Open questions
 

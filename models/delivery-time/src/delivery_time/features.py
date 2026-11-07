@@ -63,6 +63,8 @@ OPTIONAL_FEATURES = (
     "vehicle_condition_is_zero",
     "restaurant_grid",
     "delivery_grid",
+    "distance_km_raw",
+    "order_hour_label",
 )
 
 ALL_FEATURES = BASELINE_FEATURES + LINEAR_EXTRA_FEATURES + OPTIONAL_FEATURES
@@ -89,10 +91,12 @@ CATEGORICAL_FEATURES = (
     "city",
     "weather_group",
     "vehicle_type",
+    "order_type",
     "coord_status",
     "rating_bin",
     "restaurant_grid",
     "delivery_grid",
+    "order_hour_label",
 )
 
 ORDINAL_FEATURES = (
@@ -102,6 +106,7 @@ ORDINAL_FEATURES = (
 
 NUMERIC_FEATURES = (
     "distance_km",
+    "distance_km_raw",
     "multiple_deliveries",
     "age",
     "age_clipped",
@@ -182,6 +187,8 @@ FEATURE_DESCRIPTIONS = {
     "courier_delivery_count": "Number of deliveries by the courier in this dataset.",
     "restaurant_grid": "Rounded restaurant coordinates (2 decimal places).",
     "delivery_grid": "Rounded delivery coordinates (2 decimal places).",
+    "distance_km_raw": "Distance using unrepaired restaurant coordinates.",
+    "order_hour_label": "Order hour as a categorical label.",
 }
 
 
@@ -196,13 +203,15 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 def add_distance_features(frame: pl.DataFrame) -> pl.DataFrame:
-    """Compute distance and missing-distance flags from cleaned coordinates."""
-    distances = []
+    """Compute repaired and raw distance variants plus missing-distance flags."""
+    repaired_distances = []
+    raw_distances = []
     for row in frame.iter_rows(named=True):
         if row["coordinates_invalid"]:
-            distances.append(None)
+            repaired_distances.append(None)
+            raw_distances.append(None)
         else:
-            distances.append(
+            repaired_distances.append(
                 haversine_km(
                     row["restaurant_latitude_repaired"],
                     row["restaurant_longitude_repaired"],
@@ -210,8 +219,19 @@ def add_distance_features(frame: pl.DataFrame) -> pl.DataFrame:
                     row["delivery_longitude"],
                 )
             )
+            raw_distances.append(
+                haversine_km(
+                    row["restaurant_latitude"],
+                    row["restaurant_longitude"],
+                    row["delivery_latitude"],
+                    row["delivery_longitude"],
+                )
+            )
 
-    frame = frame.with_columns(pl.Series("distance_km", distances, dtype=pl.Float64))
+    frame = frame.with_columns(
+        pl.Series("distance_km", repaired_distances, dtype=pl.Float64),
+        pl.Series("distance_km_raw", raw_distances, dtype=pl.Float64),
+    )
     return frame.with_columns(pl.col("distance_km").is_null().alias("distance_missing"))
 
 
@@ -223,6 +243,7 @@ def add_time_features(frame: pl.DataFrame) -> pl.DataFrame:
         .otherwise(None)
         .alias("order_hour")
     )
+    frame = frame.with_columns(pl.col("order_hour").cast(pl.String).alias("order_hour_label"))
     frame = frame.with_columns(
         (pl.col("order_hour").cast(pl.Float64) * (2 * math.pi / 24)).sin().alias("order_hour_sin"),
         (pl.col("order_hour").cast(pl.Float64) * (2 * math.pi / 24)).cos().alias("order_hour_cos"),

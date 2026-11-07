@@ -100,16 +100,36 @@ uv run train-delivery-model
 uv run pytest models/delivery-time/tests
 ```
 
-## Artifact contract
+## Training and evaluation
 
-- `artifacts/model.joblib`: full preprocessing + XGBoost pipeline.
-- `artifacts/metrics.json`: evaluation metrics.
-- `artifacts/feature_schema.json`: expected input feature names and types.
+The training command runs an 80/10/10 random split, a Ridge linear baseline, a
+checklist-driven feature ablation, and randomized hyperparameter tuning for
+XGBoost. The selected feature set currently includes grouped weather
+(`weather_group`) based on validation RMSE.
+
+Current held-out test results:
+
+```text
+RMSE: 4.0126
+MAE:  3.1646
+R²:   0.8153
+```
+
+Artifacts:
+
+- `artifacts/model.joblib`: full preprocessing + tuned XGBoost pipeline.
+- `artifacts/metrics.json`: baseline, tuned, final, and test metrics.
+- `artifacts/feature_schema.json`: expected model inputs and categorical levels.
+- `artifacts/model_metadata.json`: feature set, hyperparameters, split, hashes, versions.
+- `artifacts/ablation_results.parquet`: feature-ablation results.
+- `artifacts/test_predictions.parquet`: held-out predictions and residuals.
+- `artifacts/permutation_importance.csv`: test-set permutation importance.
+- `artifacts/model_card.md`: concise model summary.
 
 The API reads the model through `DELIVERY_MODEL_PATH`, defaulting to
 `models/delivery-time/artifacts/model.joblib`.
 
 ## Status
 
-Data fetching, EDA, data cleaning, and feature engineering are implemented.
-Model training, evaluation, and API integration remain placeholders.
+Data fetching, EDA, data cleaning, feature engineering, model training, and
+evaluation are implemented. API integration remains a placeholder.

@@ -6,8 +6,9 @@ workspace.
 
 > **Status:** classical ML data fetching, EDA, data cleaning, feature
 > engineering, model training, and evaluation are implemented. NLP data
-> fetching, API behavior, and the remaining tests are not implemented yet. The
-> commands below describe the intended workflow.
+> fetching is implemented; NLP training/evaluation, API behavior, and the
+> remaining tests are not implemented yet. The commands below describe the
+> intended workflow.
 
 ## Projects
 
@@ -111,9 +112,9 @@ The API will be available at `http://127.0.0.1:8000`, with interactive docs at
 
 ## Data setup
 
-Kaggle credentials are optional for the public Zomato dataset. Copy the
-environment template if you want authenticated Kaggle requests or need a Hugging
-Face token for the Yelp dataset:
+Kaggle credentials are optional for the public Zomato dataset, and the public
+Yelp dataset downloads anonymously. Copy the environment template if you want
+authenticated Kaggle requests or higher Hugging Face rate limits:
 
 ```bash
 cp .env.example .env
@@ -128,7 +129,10 @@ uv run fetch-delivery-data
 # Zomato: optional authenticated download
 uv run --env-file .env fetch-delivery-data
 
-# Yelp: planned, not implemented yet
+# Yelp: anonymous download works for the public dataset
+uv run fetch-sentiment-data
+
+# Yelp: optional authenticated download if HF_TOKEN is configured
 uv run --env-file .env fetch-sentiment-data
 ```
 
@@ -167,9 +171,10 @@ intended future slot for the optional UI.
 ## Scope and status
 
 Classical ML data fetching, EDA, data cleaning, feature engineering, model
-training, and evaluation are implemented. Still pending:
+training, and evaluation are implemented. NLP data fetching is implemented.
+Still pending:
 
-- NLP data fetching, training, and evaluation
+- NLP EDA, preprocessing, training, and evaluation
 - API logic
 - optional Streamlit UI
 - final report and presentation

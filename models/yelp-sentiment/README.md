@@ -37,16 +37,16 @@ counts, and the dataset revision.
 
 1. Fetch the dataset with `httpx` and store it under `data/raw/`.
 2. Explore the data in `notebooks/01_eda.py` using Polars and plotnine.
-3. Clean and preprocess the text in `preprocess.py`.
-4. Tokenize and fine-tune the model in `train.py` and
-   `notebooks/02_finetune.py`.
-5. Evaluate the model in `evaluate.py` and `notebooks/03_evaluate.py`.
-6. Export the model and tokenizer under `artifacts/` for the API.
+3. Clean and decode the text in `notebooks/02_data_cleaning.py`.
+4. Build splits and define tokenization in `notebooks/03_feature_engineering.py`.
+5. Tokenize and fine-tune the model in `train.py` and `notebooks/04_finetune.py`.
+6. Evaluate the model in `evaluate.py` and `notebooks/05_evaluate.py`.
+7. Export the model and tokenizer under `artifacts/` for the API.
 
 ## Layout
 
 - `src/yelp_sentiment/`: importable package and CLI entry points.
-- `notebooks/`: marimo notebooks for EDA, fine-tuning, and evaluation.
+- `notebooks/`: marimo notebooks for EDA, cleaning, features, fine-tuning, and evaluation.
 - `data/raw/`, `data/interim/`, `data/processed/`: local dataset stages.
 - `artifacts/`: trained model, tokenizer, and metadata; not committed.
 - `tests/`: package tests.
@@ -57,6 +57,10 @@ counts, and the dataset revision.
 uv run fetch-sentiment-data
 uv run --env-file .env fetch-sentiment-data
 uv run marimo edit models/yelp-sentiment/notebooks/01_eda.py
+uv run marimo edit models/yelp-sentiment/notebooks/02_data_cleaning.py
+uv run marimo edit models/yelp-sentiment/notebooks/03_feature_engineering.py
+uv run marimo edit models/yelp-sentiment/notebooks/04_finetune.py
+uv run marimo edit models/yelp-sentiment/notebooks/05_evaluate.py
 uv run train-sentiment-model
 uv run pytest models/yelp-sentiment/tests
 ```
@@ -81,6 +85,4 @@ The API reads the model through `SENTIMENT_MODEL_PATH`, defaulting to
 
 ## Status
 
-Data fetching, validation, data dictionary, and EDA are implemented.
-Preprocessing, fine-tuning, evaluation, and API integration remain to be
-implemented. The EDA report is `notebooks/01_eda.py`.
+Data fetching, validation, data dictionary, EDA, data cleaning, and feature engineering are implemented. Fine-tuning, evaluation, and API integration remain to be implemented. The reports are `notebooks/01_eda.py`, `notebooks/02_data_cleaning.py`, and `notebooks/03_feature_engineering.py`.

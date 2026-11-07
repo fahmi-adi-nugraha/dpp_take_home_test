@@ -11,14 +11,9 @@ def _(mo):
 
     ## Objective
 
-    Build a semantic, typed feature frame for predicting `Time_taken (min)` at
-    order placement. The output keeps raw categorical columns, numeric features,
-    flags, and metadata; encoding and imputation are intentionally left to the
-    model-training pipeline.
+    Build a semantic, typed feature frame for predicting `Time_taken (min)` at order placement. The output keeps raw categorical columns, numeric features, flags, and metadata; encoding and imputation are intentionally left to the model-training pipeline.
 
-    Prediction happens before pickup, so `pickup_minutes`, `prep_minutes`, and
-    `Time_Order_picked` are audit-only fields and must never enter the feature
-    sets.
+    Prediction happens before pickup, so `pickup_minutes`, `prep_minutes`, and `Time_Order_picked` are audit-only fields and must never enter the feature sets.
 
     ## Inputs
 
@@ -38,6 +33,8 @@ def _():
     matplotlib.use("Agg")
     import plotnine as p9
     import polars as pl
+
+    pl.Config.set_float_precision(2)
 
     from delivery_time import config
     from delivery_time.data import load_clean_data
@@ -94,10 +91,8 @@ def _(config, load_clean_data, mo):
     cleaned = load_clean_data()
     mo.md(
         f"""
-        Loaded the cleaned dataset from
-        `{config.CLEAN_DATA_PARQUET.relative_to(config.PROJECT_ROOT)}`:
-        **{cleaned.height:,} rows × {cleaned.width} columns**.
-        """
+    Loaded the cleaned dataset from `{config.CLEAN_DATA_PARQUET.relative_to(config.PROJECT_ROOT)}`: **{cleaned.height:,} rows × {cleaned.width} columns**.
+    """
     )
     return (cleaned,)
 
@@ -131,9 +126,7 @@ def _(cleaned):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The cleaned input is row-preserving and already typed. The timestamps are in
-    minutes since midnight, the target is complete, and the coordinate flags are
-    ready to support distance construction.
+    The cleaned input is row-preserving and already typed. The timestamps are in minutes since midnight, the target is complete, and the coordinate flags are ready to support distance construction.
     """)
     return
 
@@ -143,10 +136,8 @@ def _(build_feature_frame, cleaned, mo):
     features = build_feature_frame(cleaned)
     mo.md(
         f"""
-        Built **{features.height:,} rows × {features.width} feature columns**
-        including metadata, candidate features, and optional experimental
-        fields.
-        """
+    Built **{features.height:,} rows × {features.width} feature columns** including metadata, candidate features, and optional experimental fields.
+    """
     )
     return (features,)
 
@@ -183,9 +174,7 @@ def _(feature_set_table):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The feature table separates the baseline from linear-only and optional
-    fields. The baseline uses the minimal high-signal feature set; optional fields are available
-    for ablations but are not part of the default model.
+    The feature table separates the baseline from linear-only and optional fields. The baseline uses the minimal high-signal feature set; optional fields are available for ablations but are not part of the default model.
     """)
     return
 
@@ -195,9 +184,7 @@ def _(mo):
     mo.md("""
     ## 1. Geospatial features
 
-    Distance is computed from repaired restaurant coordinates when possible.
-    Invalid coordinate pairs keep a null distance and are represented by the
-    `coordinates_invalid` flag. The sign-flipped rows are repaired with `abs()`.
+    Distance is computed from repaired restaurant coordinates when possible. Invalid coordinate pairs keep a null distance and are represented by the `coordinates_invalid` flag. The sign-flipped rows are repaired with `abs()`.
     """)
     return
 
@@ -231,10 +218,7 @@ def _(features, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Distance is available for the valid and repaired rows; the 3,640 invalid
-    pairs remain in the frame with a null distance. The moderate positive
-    relationship with the target is consistent with the EDA, and the missing
-    distance is handled by XGBoost rather than by dropping rows.
+    Distance is available for the valid and repaired rows; the 3,640 invalid pairs remain in the frame with a null distance. The moderate positive relationship with the target is consistent with the EDA, and the missing distance is handled by XGBoost rather than by dropping rows.
     """)
     return
 
@@ -244,9 +228,7 @@ def _(mo):
     mo.md("""
     ## 2. Time features
 
-    The cleaned times are converted into order hour, cyclical hour encodings,
-    day-of-week metadata, and rush/meal flags. Raw `order_hour` is the default
-    tree feature; sin/cos are linear-baseline candidates.
+    The cleaned times are converted into order hour, cyclical hour encodings, day-of-week metadata, and rush/meal flags. Raw `order_hour` is the default tree feature; sin/cos are linear-baseline candidates.
     """)
     return
 
@@ -271,9 +253,7 @@ def _(features):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The hour features are derived from the normalized order time. Missing order
-    times produce null hour values and a `time_order_missing` flag; the model
-    pipeline should not impute order time from the later pickup time.
+    The hour features are derived from the normalized order time. Missing order times produce null hour values and a `time_order_missing` flag; the model pipeline should not impute order time from the later pickup time.
     """)
     return
 
@@ -283,8 +263,7 @@ def _(mo):
     mo.md("""
     ## 3. Categorical and ordinal features
 
-    Nominal categories remain as strings for the training pipeline to encode.
-    Traffic density and vehicle condition are represented as ordinal integers.
+    Nominal categories remain as strings for the training pipeline to encode. Traffic density and vehicle condition are represented as ordinal integers.
     """)
     return
 
@@ -318,10 +297,7 @@ def _(features, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Weather, city, and vehicle type are low-cardinality and suitable for
-    one-hot or native categorical handling. The rounded-coordinate grids are
-    high-cardinality experimental fields and should not be one-hot encoded
-    without a deliberate encoding strategy.
+    Weather, city, and vehicle type are low-cardinality and suitable for one-hot or native categorical handling. The rounded-coordinate grids are high-cardinality experimental fields and should not be one-hot encoded without a deliberate encoding strategy.
     """)
     return
 
@@ -331,9 +307,7 @@ def _(mo):
     mo.md("""
     ## 4. Missingness indicators
 
-    Missingness is retained explicitly. City and multiple-delivery missingness
-    are baseline indicators; the remaining indicators are optional or reserved
-    for ablation because their target relationship was weak or suspicious.
+    Missingness is retained explicitly. City and multiple-delivery missingness are baseline indicators; the remaining indicators are optional or reserved for ablation because their target relationship was weak or suspicious.
     """)
     return
 
@@ -395,9 +369,7 @@ def _(THEME, feature_missing_tbl, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Distance, age, rating, order hour, city, and multiple deliveries carry the
-    largest missing shares. The training pipeline will decide whether to impute
-    them or rely on XGBoost's native missing-value handling.
+    Distance, age, rating, order hour, city, and multiple deliveries carry the largest missing shares. The training pipeline will decide whether to impute them or rely on XGBoost's native missing-value handling.
     """)
     return
 
@@ -407,9 +379,7 @@ def _(mo):
     mo.md("""
     ## 5. Feature sets and encoding plan
 
-    The baseline set is the minimal high-signal feature set. Linear-only extras are useful for a
-    linear model but are not part of the default tree model. Optional features
-    remain available for ablations.
+    The baseline set is the minimal high-signal feature set. Linear-only extras are useful for a linear model but are not part of the default tree model. Optional features remain available for ablations.
     """)
     return
 
@@ -487,9 +457,7 @@ def _(pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    One-hot encoding is appropriate for the low-cardinality nominal fields.
-    High-cardinality grid features are experimental and should not be one-hot
-    encoded. Imputation, scaling, and encoding belong in the training pipeline.
+    One-hot encoding is appropriate for the low-cardinality nominal fields. High-cardinality grid features are experimental and should not be one-hot encoded. Imputation, scaling, and encoding belong in the training pipeline.
     """)
     return
 
@@ -499,9 +467,7 @@ def _(mo):
     mo.md("""
     ## 6. Leakage controls
 
-    The target is measured from order placement, so pickup time and pickup delay
-    are not available at prediction time. Identifiers and the target itself are
-    metadata, not model features.
+    The target is measured from order placement, so pickup time and pickup delay are not available at prediction time. Identifiers and the target itself are metadata, not model features.
     """)
     return
 
@@ -554,8 +520,7 @@ def _(pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The model feature lists contain none of these fields. Any courier-level
-    target encoding must be added later with out-of-fold validation.
+    The model feature lists contain none of these fields. Any courier-level target encoding must be added later with out-of-fold validation.
     """)
     return
 
@@ -565,9 +530,7 @@ def _(mo):
     mo.md("""
     ## 7. Output
 
-    The feature artifact is a semantic frame, not an encoded model matrix. It is
-    written as Parquet and CSV with a manifest containing feature sets, dtypes,
-    and leakage metadata.
+    The feature artifact is a semantic frame, not an encoded model matrix. It is written as Parquet and CSV with a manifest containing feature sets, dtypes, and leakage metadata.
     """)
     return
 
@@ -633,8 +596,7 @@ def _(mo):
     **Baseline features**
 
     - Geospatial: `distance_km`, `coordinates_invalid`.
-    - Order context: `traffic_ordinal`, `weather`, `city`, `festival_binary`,
-      `multiple_deliveries`, `has_multiple_deliveries`, `vehicle_condition`.
+    - Order context: `traffic_ordinal`, `weather`, `city`, `festival_binary`, `multiple_deliveries`, `has_multiple_deliveries`, `vehicle_condition`.
     - Courier: `age`, `rating`.
     - Time: `order_hour`, `is_rush_hour`, `is_meal_period`, `time_order_missing`.
     - Missingness: `city_missing`, `multiple_missing`.
@@ -645,14 +607,11 @@ def _(mo):
 
     **Optional or experimental**
 
-    - Distance/coordinate diagnostics, weather grouping, vehicle type, order
-      type, day-of-week, missingness flags, clipped courier values, rounded
-      coordinate grids, and courier delivery count.
+    - Distance/coordinate diagnostics, weather grouping, vehicle type, order type, day-of-week, missingness flags, clipped courier values, rounded coordinate grids, and courier delivery count.
 
     **Excluded**
 
-    - `pickup_minutes`, `prep_minutes`, `Time_Order_picked`, identifiers, and the
-      target itself.
+    - `pickup_minutes`, `prep_minutes`, `Time_Order_picked`, identifiers, and the target itself.
 
     **Outputs**
 
@@ -660,9 +619,7 @@ def _(mo):
     - `data/processed/zomato_features.csv`
     - `data/processed/zomato_features_manifest.json`
 
-    **Next step:** `04_model_training.py` reads the feature artifact, applies
-    model-specific preprocessing, and runs the XGBoost baseline and feature
-    ablations.
+    **Next step:** `04_model_training.py` reads the feature artifact, applies model-specific preprocessing, and runs the XGBoost baseline and feature ablations.
     """)
     return
 

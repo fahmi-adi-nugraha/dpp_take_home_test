@@ -11,20 +11,15 @@ def _(mo):
 
     ## Objective
 
-    Train a linear baseline and a tuned XGBoost regressor for order-time
-    delivery prediction, using the baseline feature set and validation-driven
-    feature ablations.
+    Train a linear baseline and a tuned XGBoost regressor for order-time delivery prediction, using the baseline feature set and validation-driven feature ablations.
 
-    The training pipeline is implemented in
-    [`../src/delivery_time/train.py`](../src/delivery_time/train.py) and is
-    executed with:
+    The training pipeline is implemented in [`../src/delivery_time/train.py`](../src/delivery_time/train.py) and is executed with:
 
     ```bash
     uv run train-delivery-model
     ```
 
-    This notebook reads the generated artifacts and documents the model
-    selection, ablation results, test performance, and error analysis.
+    This notebook reads the generated artifacts and documents the model selection, ablation results, test performance, and error analysis.
 
     ## Setup
 
@@ -48,6 +43,8 @@ def _():
     matplotlib.use("Agg")
     import plotnine as p9
     import polars as pl
+
+    pl.Config.set_float_precision(2)
 
     from delivery_time import config
     from delivery_time.evaluate import error_by_category
@@ -101,9 +98,8 @@ def _(config, json, mo, pl):
 
     mo.md(
         f"""
-        Loaded artifacts for the **{metrics['selected_feature_set']}** feature
-        set. Test rows: **{len(test_predictions):,}**.
-        """
+    Loaded artifacts for the **{metrics['selected_feature_set']}** feature set. Test rows: **{len(test_predictions):,}**.
+    """
     )
     return (
         ablation_results,
@@ -120,9 +116,7 @@ def _(mo):
     mo.md("""
     ## 1. Split and baseline metrics
 
-    The primary split is a reproducible random 80/10/10 split. The validation
-    split is used for model comparison and tuning; the test split is used only
-    for the final selected model.
+    The primary split is a reproducible random 80/10/10 split. The validation split is used for model comparison and tuning; the test split is used only for the final selected model.
     """)
     return
 
@@ -170,15 +164,8 @@ def _(metrics, mo):
     _models = metrics["models"]
     mo.md(
         f"""
-        The mean baseline RMSE is **{_models['dummy_mean']['validation']['rmse']:.2f}**.
-        Ridge improves that to **{_models['ridge_baseline']['validation']['rmse']:.2f}**,
-        and the linear extras bring it to
-        **{_models['ridge_linear_extra']['validation']['rmse']:.2f}**.
-        XGBoost starts at **{_models['xgboost_baseline']['validation']['rmse']:.2f}**
-        and reaches **{_models['xgboost_tuned']['validation']['rmse']:.2f}** after tuning.
-        The final model scores **{_models['final_xgboost']['test']['rmse']:.2f}** RMSE
-        on the held-out test set.
-        """
+    The mean baseline RMSE is **{_models['dummy_mean']['validation']['rmse']:.2f}**. Ridge improves that to **{_models['ridge_baseline']['validation']['rmse']:.2f}**, and the linear extras bring it to **{_models['ridge_linear_extra']['validation']['rmse']:.2f}**. XGBoost starts at **{_models['xgboost_baseline']['validation']['rmse']:.2f}** and reaches **{_models['xgboost_tuned']['validation']['rmse']:.2f}** after tuning. The final model scores **{_models['final_xgboost']['test']['rmse']:.2f}** RMSE on the held-out test set.
+    """
     )
     return
 
@@ -188,9 +175,7 @@ def _(mo):
     mo.md("""
     ## 2. Feature ablation
 
-    Ablations use a fixed XGBoost configuration on validation data. They isolate
-    distance handling, multiple-delivery encoding, hour encoding, missingness
-    flags, and optional feature groups.
+    Ablations use a fixed XGBoost configuration on validation data. They isolate distance handling, multiple-delivery encoding, hour encoding, missingness flags, and optional feature groups.
     """)
     return
 
@@ -261,14 +246,8 @@ def _(ablation_results, mo, pl):
     )
     mo.md(
         f"""
-        The best eligible ablation is **{_best['name']}** at
-        **{_best['rmse']:.3f}** validation RMSE, a
-        **{abs(_best['delta_rmse_vs_baseline']):.3f}** improvement over the
-        baseline. Dropping invalid-coordinate rows scores
-        **{_invalid['rmse']:.3f}**, but it is diagnostic only because the
-        cleaning policy keeps those rows with a validity flag. Removing distance is
-        clearly harmful at **{_no_distance['rmse']:.3f}** RMSE.
-        """
+    The best eligible ablation is **{_best['name']}** at **{_best['rmse']:.2f}** validation RMSE, a **{abs(_best['delta_rmse_vs_baseline']):.2f}** improvement over the baseline. Dropping invalid-coordinate rows scores **{_invalid['rmse']:.2f}**, but it is diagnostic only because the cleaning policy keeps those rows with a validity flag. Removing distance is clearly harmful at **{_no_distance['rmse']:.2f}** RMSE.
+    """
     )
     return
 
@@ -278,9 +257,7 @@ def _(mo):
     mo.md("""
     ## 3. Hyperparameter tuning
 
-    Ridge alpha and XGBoost hyperparameters are tuned with five-fold
-    `RandomizedSearchCV` on the training split. The search optimizes negative
-    RMSE; no exhaustive grid search is used.
+    Ridge alpha and XGBoost hyperparameters are tuned with five-fold `RandomizedSearchCV` on the training split. The search optimizes negative RMSE; no exhaustive grid search is used.
     """)
     return
 
@@ -302,11 +279,8 @@ def _(metrics, mo):
     _tuned = metrics["models"]["xgboost_tuned"]
     mo.md(
         f"""
-        The tuned XGBoost model reaches **{_tuned['cv_rmse']:.3f}** CV RMSE,
-        **{_tuned['validation']['rmse']:.3f}** validation RMSE, and
-        **{_tuned['validation']['r2']:.3f}** validation R². The final model is
-        refit on train + validation and evaluated once on test.
-        """
+    The tuned XGBoost model reaches **{_tuned['cv_rmse']:.2f}** CV RMSE, **{_tuned['validation']['rmse']:.2f}** validation RMSE, and **{_tuned['validation']['r2']:.2f}** validation R². The final model is refit on train + validation and evaluated once on test.
+    """
     )
     return
 
@@ -316,8 +290,7 @@ def _(mo):
     mo.md("""
     ## 4. Test-set performance
 
-    The plots below use only the held-out test predictions from the final
-    refit model.
+    The plots below use only the held-out test predictions from the final refit model.
     """)
     return
 
@@ -385,9 +358,7 @@ def _(THEME, p9, save_plot, test_predictions):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The residual distribution is centered near zero, with a small positive tail
-    indicating some under-prediction of long deliveries. The residual summary
-    below quantifies that behavior.
+    The residual distribution is centered near zero, with a small positive tail indicating some under-prediction of long deliveries. The residual summary below quantifies that behavior.
     """)
     return
 
@@ -411,8 +382,7 @@ def _(mo):
     mo.md("""
     ## 5. Segment error analysis
 
-    I compare absolute error across city, traffic, weather, coordinate validity,
-    and multiple-delivery groups to identify where the model struggles.
+    We compare absolute error across city, traffic, weather, coordinate validity, and multiple-delivery groups to identify where the model struggles.
     """)
     return
 
@@ -485,9 +455,7 @@ def _(mo):
     mo.md("""
     ## 6. Feature importance
 
-    Permutation importance is computed on the test split for the final model.
-    It measures the RMSE increase when a feature is shuffled and is therefore
-    in the same units as the target.
+    Permutation importance is computed on the test split for the final model. It measures the RMSE increase when a feature is shuffled and is therefore in the same units as the target.
     """)
     return
 
@@ -531,7 +499,7 @@ def _(mo, permutation_importance):
     mo.md(
         "The top permutation-importance features are: "
         + ", ".join(
-            f"`{row['feature']}` ({row['importance_mean']:.3f})" for row in _top
+            f"`{row['feature']}` ({row['importance_mean']:.2f})" for row in _top
         )
         + ". This confirms the model relies on the expected delivery-time signals "
         "rather than identifiers or leakage fields."
@@ -544,8 +512,7 @@ def _(mo):
     mo.md("""
     ## 7. Saved artifacts
 
-    The final pipeline, metrics, schema, metadata, ablations, and test
-    predictions are written under `artifacts/`.
+    The final pipeline, metrics, schema, metadata, ablations, and test predictions are written under `artifacts/`.
     """)
     return
 
@@ -576,10 +543,7 @@ def _(config, metadata, pl):
 @app.cell(hide_code=True)
 def _(feature_schema, mo):
     mo.md(f"""
-    The saved feature schema contains **{len(feature_schema['features'])}**
-    expected model inputs, with
-    **{len(feature_schema['categorical_features'])}** categorical features.
-    Package versions and the git commit are recorded in the metadata file.
+    The saved feature schema contains **{len(feature_schema['features'])}** expected model inputs, with **{len(feature_schema['categorical_features'])}** categorical features. Package versions and the git commit are recorded in the metadata file.
     """)
     return
 
@@ -590,22 +554,19 @@ def _(metadata, metrics, mo):
     _tuned = metrics["models"]["xgboost_tuned"]
     mo.md(
         f"""
-        ## Summary
+    ## Summary
 
-        - **Selected feature set:** `{metrics['selected_feature_set']}`
-        - **Best validation RMSE after tuning:** {_tuned['validation']['rmse']:.3f}
-        - **Held-out test RMSE:** {_test['rmse']:.3f}
-        - **Held-out test MAE:** {_test['mae']:.3f}
-        - **Held-out test R²:** {_test['r2']:.3f}
-        - **Training command:** `uv run train-delivery-model`
-        - **Model artifact:** `models/delivery-time/artifacts/model.joblib`
-        - **Git commit at training time:** `{metadata.get('git_commit')}`
+    - **Selected feature set:** `{metrics['selected_feature_set']}`
+    - **Best validation RMSE after tuning:** {_tuned['validation']['rmse']:.2f}
+    - **Held-out test RMSE:** {_test['rmse']:.2f}
+    - **Held-out test MAE:** {_test['mae']:.2f}
+    - **Held-out test R²:** {_test['r2']:.2f}
+    - **Training command:** `uv run train-delivery-model`
+    - **Model artifact:** `models/delivery-time/artifacts/model.joblib`
+    - **Git commit at training time:** `{metadata.get('git_commit')}`
 
-        The ablation stage promoted the grouped-weather feature into the final
-        model. Invalid-coordinate dropping was diagnostic only, and removing
-        distance caused the largest validation regression. The final model is
-        ready for the inference API integration step.
-        """
+    The ablation stage promoted the grouped-weather feature into the final model. Invalid-coordinate dropping was diagnostic only, and removing distance caused the largest validation regression. The final model is ready for the inference API integration step.
+    """
     )
     return
 

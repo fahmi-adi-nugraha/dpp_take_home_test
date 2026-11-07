@@ -11,17 +11,12 @@ def _(mo):
 
     ## Problem
 
-    The goal is to predict product delivery time for Zomato delivery orders at
-    the point the order is placed. This is a regression problem: the output is
-    an estimated delivery duration in minutes, not a class label. The model is
-    intended for order-time ETA estimation, so pickup time and pickup delay are
-    not available as inputs.
+    The goal is to predict product delivery time for Zomato delivery orders at the point the order is placed. This is a regression problem: the output is an estimated delivery duration in minutes, not a class label. The model is intended for order-time ETA estimation, so pickup time and pickup delay are not available as inputs.
 
     ## Dataset
 
     - **Source:** [Zomato Delivery Operations Analytics Dataset](https://www.kaggle.com/datasets/saurabhbadole/zomato-delivery-operations-analytics-dataset)
-    - **Local snapshot:** 45,584 rows and 20 columns, fetched with
-      `uv run fetch-delivery-data`.
+    - **Local snapshot:** 45,584 rows and 20 columns, fetched with `uv run fetch-delivery-data`.
     - **Raw file:** `data/raw/zomato/Zomato Dataset.csv`
     - **Target:** `Time_taken (min)`
     - **Field reference:** [`../DATA_DICTIONARY.md`](../DATA_DICTIONARY.md)
@@ -51,8 +46,7 @@ def _(mo):
     | `City` | City or area type. | Categorical feature |
     | `Time_taken (min)` | Time taken for delivery in minutes. | **Target** |
 
-    All raw columns are read as text; missing values are literal `"NaN"`
-    strings, not empty cells.
+    All raw columns are read as text; missing values are literal `"NaN"` strings, not empty cells.
     """)
     return
 
@@ -70,6 +64,8 @@ def _():
     matplotlib.use("Agg")
     import plotnine as p9
     import polars as pl
+
+    pl.Config.set_float_precision(2)
 
     try:
         NOTEBOOK_DIR = Path(__file__).resolve().parent
@@ -336,13 +332,10 @@ def _(RAW_PATH, build_analysis_frame, mo, pl):
     df = build_analysis_frame(raw)
     mo.md(
         f"""
-        Loaded **{raw.height:,} rows × {raw.width} columns** from
-        `{RAW_PATH}`.
+    Loaded **{raw.height:,} rows × {raw.width} columns** from `{RAW_PATH}`.
 
-        The analysis frame adds parsed dates, normalized times, derived time
-        features, distance, coordinate-quality flags, missingness indicators,
-        and a courier delivery count.
-        """
+    The analysis frame adds parsed dates, normalized times, derived time features, distance, coordinate-quality flags, missingness indicators, and a courier delivery count.
+    """
     )
     return df, raw
 
@@ -352,9 +345,7 @@ def _(mo):
     mo.md("""
     ## 1. Data overview
 
-    I start with the schema, summary statistics, and the first rows. This gives
-    an initial sense of the data types, ranges, and obvious data-entry issues
-    before the formal missing-value and duplicate checks.
+    We start with the schema, summary statistics, and the first rows. This gives an initial sense of the data types, ranges, and obvious data-entry issues before the formal missing-value and duplicate checks.
     """)
     return
 
@@ -391,11 +382,7 @@ def _(raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The raw columns are all strings, and `"NaN"` is stored as
-    literal text rather than a null. The target is integer-valued from 10 to 54
-    minutes, and the order-time columns already show mixed representations. The
-    coordinate columns also contain exact zero values, which will need a
-    validity check before distance is computed.
+    The raw columns are all strings, and `"NaN"` is stored as literal text rather than a null. The target is integer-valued from 10 to 54 minutes, and the order-time columns already show mixed representations. The coordinate columns also contain exact zero values, which will need a validity check before distance is computed.
     """)
     return
 
@@ -405,9 +392,7 @@ def _(mo):
     mo.md("""
     ## 2. Missing values
 
-    Missing values are stored as the literal string `"NaN"`, not as empty
-    cells. The target has no missing values; the largest gaps are in courier
-    ratings, courier age, and order time.
+    Missing values are stored as the literal string `"NaN"`, not as empty cells. The target has no missing values; the largest gaps are in courier ratings, courier age, and order time.
     """)
     return
 
@@ -465,11 +450,7 @@ def _(THEME, missing_tbl, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Ratings, age, and order time each have roughly 3.8–4.2%
-    missing values; city has 2.6%, multiple deliveries 2.2%, weather and traffic
-    about 1.3%, and festival 0.5%. These are literal `"NaN"` strings, so the
-    cleaning step should parse them as nulls and add missingness indicators
-    where the missing pattern is informative.
+    Ratings, age, and order time each have roughly 3.80–4.20% missing values; city has 2.60%, multiple deliveries 2.20%, weather and traffic about 1.30%, and festival 0.50%. These are literal `"NaN"` strings, so the cleaning step should parse them as nulls and add missingness indicators where the missing pattern is informative.
     """)
     return
 
@@ -479,19 +460,18 @@ def _(mo):
     mo.md("""
     ## 3. Duplicate rows and target distribution
 
-    There are no duplicate rows. The target is integer-valued from 10 to 54
-    minutes and shows heaping at round values.
+    There are no duplicate rows. The target is integer-valued from 10 to 54 minutes and shows heaping at round values.
     """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, raw):
-    mo.md(f"""
-    Duplicate rows: **{raw.is_duplicated().sum()}**. "
-        f"Unique delivery IDs: **{raw['ID'].n_unique():,}**. "
-        f"Rows: **{raw.height:,}**.
-    """)
+    mo.md(
+        f"""
+    Duplicate rows: **{raw.is_duplicated().sum()}**. Unique delivery IDs: **{raw['ID'].n_unique():,}**. Rows: **{raw.height:,}**.
+    """
+    )
     return
 
 
@@ -528,7 +508,7 @@ def _(THEME, df, p9, save_plot):
             title="Target distribution: Time_taken (min)",
             subtitle=(
                 f"mean={df['target'].mean():.2f}, "
-                f"median={df['target'].median():.1f}, n={df.height:,}; "
+                f"median={df['target'].median():.2f}, n={df.height:,}; "
                 "dashed=mean, dotted=median"
             ),
             x="Minutes",
@@ -543,11 +523,7 @@ def _(THEME, df, p9, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    There are no duplicate rows. The target is bounded between
-    10 and 54 minutes with a median of 26 and visible spikes at round values such
-    as 15, 25, and 35. The spikes look like rounding or heaping rather than
-    separate populations. Regression is still reasonable, but residuals should
-    be checked for structure around those values.
+    There are no duplicate rows. The target is bounded between 10 and 54 minutes with a median of 26 and visible spikes at round values such as 15, 25, and 35. The spikes look like rounding or heaping rather than separate populations. Regression is still reasonable, but residuals should be checked for structure around those values.
     """)
     return
 
@@ -557,11 +533,7 @@ def _(mo):
     mo.md("""
     ## 4. Class balance and non-standard values
 
-    The target is continuous, so there are no target classes. The
-    categorical checks show severe imbalance in City, vehicle type, vehicle
-    condition 3, and Festival. The raw data also contains inconsistent time
-    formats, a city spelling typo, out-of-range courier attributes, and
-    invalid coordinates.
+    The target is continuous, so there are no target classes. The categorical checks show severe imbalance in City, vehicle type, vehicle condition 3, and Festival. The raw data also contains inconsistent time formats, a city spelling typo, out-of-range courier attributes, and invalid coordinates.
     """)
     return
 
@@ -634,10 +606,7 @@ def _(THEME, categorical_long, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Several categories are rare: Semi-Urban accounts for only 0.36% of rows,
-    bicycle for 0.15%, vehicle condition 3 for 1.14%, and Festival Yes for 1.97%.
-    Those levels can carry real signal, but they are small enough that encoding
-    choices and regularization matter.
+    Several categories are rare: Semi-Urban accounts for only 0.36% of rows, bicycle for 0.15%, vehicle condition 3 for 1.14%, and Festival Yes for 1.97%. Those levels can carry real signal, but they are small enough that encoding choices and regularization matter.
     """)
     return
 
@@ -725,13 +694,7 @@ def _(THEME, p9, save_plot, time_long):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The time columns are not consistently parsed: they mix `HH:MM`,
-    fractional-day values, `1` meaning 24:00, and `24:xx:00` values. Other
-    issues include the `Metropolitian` spelling, ratings up to 6.0, 38 courier
-    ages below 18, 3,640 invalid coordinate pairs, and 431 sign-flipped
-    restaurant coordinates. The cleaning plan should normalize the time strings
-    and city spelling, flag or clip out-of-range values, and repair or flag
-    coordinates before computing distance.
+    The time columns are not consistently parsed: they mix `HH:MM`, fractional-day values, `1` meaning 24:00, and `24:xx:00` values. Other issues include the `Metropolitian` spelling, ratings up to 6.00, 38 courier ages below 18, 3,640 invalid coordinate pairs, and 431 sign-flipped restaurant coordinates. The cleaning plan should normalize the time strings and city spelling, flag or clip out-of-range values, and repair or flag coordinates before computing distance.
     """)
     return
 
@@ -741,8 +704,7 @@ def _(mo):
     mo.md("""
     ## 5. Target relationships
 
-    Traffic, weather, city, festival, multiple deliveries, vehicle
-    condition, and vehicle type show clear differences in delivery time.
+    Traffic, weather, city, festival, multiple deliveries, vehicle condition, and vehicle type show clear differences in delivery time.
     """)
     return
 
@@ -807,10 +769,7 @@ def _(THEME, df, long_box, p9, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Traffic and weather both matter. Low traffic has a median around 20 minutes
-    while Jam is around 31; Sunny weather is around 20 while Fog and Cloudy are
-    around 28. Traffic should be treated as ordinal, and weather should be kept
-    as a categorical feature.
+    Traffic and weather both matter. Low traffic has a median around 20 minutes while Jam is around 31; Sunny weather is around 20 while Fog and Cloudy are around 28. Traffic should be treated as ordinal, and weather should be kept as a categorical feature.
     """)
     return
 
@@ -879,11 +838,7 @@ def _(THEME, df, long_box, p9, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    City, festival, and multiple deliveries show the largest effects here:
-    Semi-Urban has a median around 49 minutes, Festival Yes around 45, and
-    multiple deliveries 3 around 48. Vehicle type is a more modest signal.
-    City and festival should be one-hot encoded; multiple deliveries can use
-    both the count and a binary flag.
+    City, festival, and multiple deliveries show the largest effects here: Semi-Urban has a median around 49 minutes, Festival Yes around 45, and multiple deliveries 3 around 48. Vehicle type is a more modest signal. City and festival should be one-hot encoded; multiple deliveries can use both the count and a binary flag.
     """)
     return
 
@@ -936,10 +891,7 @@ def _(df, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Order type is essentially flat, while day-of-week and weekend are weak.
-    Rush-hour and meal-period flags are useful summaries of the stronger
-    hour-of-day pattern, but they should not be expected to carry much
-    independent signal beyond the hour itself.
+    Order type is essentially flat, while day-of-week and weekend are weak. Rush-hour and meal-period flags are useful summaries of the stronger hour-of-day pattern, but they should not be expected to carry much independent signal beyond the hour itself.
     """)
     return
 
@@ -949,8 +901,7 @@ def _(mo):
     mo.md("""
     ## 6. Time-of-day pattern
 
-    Morning deliveries have the shortest times; evening deliveries have the
-    longest. The pattern is strong enough to retain hour-derived features.
+    Morning deliveries have the shortest times; evening deliveries have the longest. The pattern is strong enough to retain hour-derived features.
     """)
     return
 
@@ -1029,11 +980,7 @@ def _(THEME, df, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Morning deliveries around 08:00–10:00 are the fastest,
-    while the 19:00–21:00 block is the slowest. The pattern is strong and
-    non-monotonic, so hour-of-day belongs in the feature set. Raw `order_hour`
-    is sufficient for XGBoost; cyclical sin/cos encodings are better reserved
-    for the linear baseline.
+    Morning deliveries around 08:00–10:00 are the fastest, while the 19:00–21:00 block is the slowest. The pattern is strong and non-monotonic, so hour-of-day belongs in the feature set. Raw `order_hour` is sufficient for XGBoost; cyclical sin/cos encodings are better reserved for the linear baseline.
     """)
     return
 
@@ -1043,9 +990,7 @@ def _(mo):
     mo.md("""
     ## 7. Distance and coordinate validity
 
-    Distance has a moderate positive relationship with delivery time. The
-    invalid-coordinate rows have a similar target distribution to valid
-    rows, so they can stay in the dataset with a missing-distance indicator.
+    Distance has a moderate positive relationship with delivery time. The invalid-coordinate rows have a similar target distribution to valid rows, so they can stay in the dataset with a missing-distance indicator.
     """)
     return
 
@@ -1122,7 +1067,7 @@ def _(THEME, p9, pl, save_plot, valid_distances):
         + p9.theme(figure_size=(7, 5))
         + p9.labs(
             title="Distance vs delivery time (valid coordinates)",
-            subtitle=f"Spearman correlation={_correlation:.3f}; 35% sample shown",
+            subtitle=f"Spearman correlation={_correlation:.2f}; 35% sample shown",
             x="Haversine distance (km)",
             y="Time taken (min)",
         )
@@ -1141,7 +1086,7 @@ def _(THEME, distance_deciles, p9, pl, save_plot):
         p9.ggplot(_plot_df, p9.aes(x="decile_label", y="mean_target"))
         + p9.geom_col(fill="#4C78A8")
         + p9.geom_text(
-            p9.aes(label="mean_target"), format_string="{:.1f}", va="bottom", size=8
+            p9.aes(label="mean_target"), format_string="{:.2f}", va="bottom", size=8
         )
         + THEME
         + p9.theme(figure_size=(7, 5))
@@ -1160,10 +1105,7 @@ def _(THEME, distance_deciles, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Distance has a moderate positive relationship with the target, but the
-    effect is not linear: it rises through the middle deciles and then plateaus.
-    Raw distance is fine for XGBoost; a binned or spline version may help a
-    linear baseline.
+    Distance has a moderate positive relationship with the target, but the effect is not linear: it rises through the middle deciles and then plateaus. Raw distance is fine for XGBoost; a binned or spline version may help a linear baseline.
     """)
     return
 
@@ -1191,12 +1133,7 @@ def _(THEME, df, p9, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The invalid-coordinate rows have a target distribution similar to valid
-    rows, so dropping them would remove about 8% of the data without an obvious
-    target-bias benefit. A better approach is to keep them, set distance to
-    null, and include a coordinate-validity flag. The 431 sign-flipped
-    restaurant coordinates should be tested with an `abs()` repair before
-    distance is computed.
+    The invalid-coordinate rows have a target distribution similar to valid rows, so dropping them would remove about 8% of the data without an obvious target-bias benefit. A better approach is to keep them, set distance to null, and include a coordinate-validity flag. The 431 sign-flipped restaurant coordinates should be tested with an `abs()` repair before distance is computed.
     """)
     return
 
@@ -1206,10 +1143,7 @@ def _(mo):
     mo.md("""
     ## 8. Missingness and target
 
-    Festival, city, and multiple-delivery missingness are strongly
-    associated with the target. Age, rating, order time, weather, and
-    traffic missingness are close to missing-at-random with respect to the
-    target.
+    Festival, city, and multiple-delivery missingness are strongly associated with the target. Age, rating, order time, weather, and traffic missingness are close to missing-at-random with respect to the target.
     """)
     return
 
@@ -1272,12 +1206,7 @@ def _(THEME, missingness_long, p9, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Missingness is not uniform in meaning. Age, rating, order
-    time, weather, and traffic missingness look close to missing-at-random with
-    respect to the target. City and multiple-delivery missingness are associated
-    with lower delivery times, and festival missingness is extreme: every such
-    row has a target between 10 and 14 minutes. That last pattern is useful but
-    suspicious and could be an artifact of how the dataset was assembled.
+    Missingness is not uniform in meaning. Age, rating, order time, weather, and traffic missingness look close to missing-at-random with respect to the target. City and multiple-delivery missingness are associated with lower delivery times, and festival missingness is extreme: every such row has a target between 10 and 14 minutes. That last pattern is useful but suspicious and could be an artifact of how the dataset was assembled.
     """)
     return
 
@@ -1287,10 +1216,7 @@ def _(mo):
     mo.md("""
     ## 9. Correlation and courier attributes
 
-    Distance, age, rating, multiple deliveries, and vehicle condition are
-    the strongest numeric signals. Day-of-week is essentially uncorrelated
-    with the target. Age is step-like, and rating is non-monotonic at the
-    extremes.
+    Distance, age, rating, multiple deliveries, and vehicle condition are the strongest numeric signals. Day-of-week is essentially uncorrelated with the target. Age is step-like, and rating is non-monotonic at the extremes.
     """)
     return
 
@@ -1344,10 +1270,7 @@ def _(THEME, df, p9, pl, save_plot, spearman_matrix):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Distance, age, rating, multiple deliveries, and vehicle condition are the
-    strongest numeric signals. The correlation matrix is a screening tool, not
-    evidence of causation, but it is consistent with the group differences seen
-    in the plots.
+    Distance, age, rating, multiple deliveries, and vehicle condition are the strongest numeric signals. The correlation matrix is a screening tool, not evidence of causation, but it is consistent with the group differences seen in the plots.
     """)
     return
 
@@ -1417,10 +1340,7 @@ def _(THEME, age_agg, p9, pl, rating_agg, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Age is step-like rather than linear, and rating is non-monotonic at the
-    extremes. A tree model can capture the raw values; a linear model should bin
-    them. The rare out-of-range rating values are worth flagging separately
-    rather than silently treating them as ordinary ratings.
+    Age is step-like rather than linear, and rating is non-monotonic at the extremes. A tree model can capture the raw values; a linear model should bin them. The rare out-of-range rating values are worth flagging separately rather than silently treating them as ordinary ratings.
     """)
     return
 
@@ -1430,9 +1350,7 @@ def _(mo):
     mo.md("""
     ## 10. Courier frequency
 
-    Courier delivery count has essentially no target relationship. Keep it
-    out of the core feature set unless testing courier-level target
-    encoding.
+    Courier delivery count has essentially no target relationship. Keep it out of the core feature set unless testing courier-level target encoding.
     """)
     return
 
@@ -1475,7 +1393,7 @@ def _(THEME, courier_counts, df, p9, pl, save_plot):
         + p9.theme(figure_size=(7, 5))
         + p9.labs(
             title="Deliveries per courier",
-            subtitle=f"Median shown as dashed line; rank correlation with target={_correlation:.3f}",
+            subtitle=f"Median shown as dashed line; rank correlation with target={_correlation:.2f}",
             x="Deliveries in dataset",
             y="Courier count",
         )
@@ -1488,11 +1406,7 @@ def _(THEME, courier_counts, df, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Couriers appear between 5 and 67 times, but delivery
-    frequency has essentially no relationship with the target. A raw courier
-    count is therefore not worth carrying. Courier-level historical target
-    encoding remains an experimental option only, and it would require
-    out-of-fold validation.
+    Couriers appear between 5 and 67 times, but delivery frequency has essentially no relationship with the target. A raw courier count is therefore not worth carrying. Courier-level historical target encoding remains an experimental option only, and it would require out-of-fold validation.
     """)
     return
 
@@ -1502,12 +1416,7 @@ def _(mo):
     mo.md("""
     ## 11. Leakage check: pickup delay
 
-    Pickup delay is 5–15 minutes and has a near-zero rank correlation with
-    the target. This suggests `Time_taken (min)` may measure
-    pickup-to-delivery travel time rather than order-to-delivery time.
-    Confirm the target definition before modeling. Regardless of the
-    definition, `Time_Order_picked` and pickup delay are not available at
-    order placement and must not be model features.
+    Pickup delay is 5–15 minutes and has a near-zero rank correlation with the target. This suggests `Time_taken (min)` may measure pickup-to-delivery travel time rather than order-to-delivery time. Confirm the target definition before modeling. Regardless of the definition, `Time_Order_picked` and pickup delay are not available at order placement and must not be model features.
     """)
     return
 
@@ -1527,12 +1436,7 @@ def _(df, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Pickup delay is only 5–15 minutes and has almost no rank
-    correlation with the target. That suggests `Time_taken (min)` may measure
-    pickup-to-delivery travel time rather than order-to-delivery time. The exact
-    start point should be confirmed before modeling. Regardless of the answer,
-    `Time_Order_picked` and pickup delay are unavailable at order placement and
-    must stay out of the feature set.
+    Pickup delay is only 5–15 minutes and has almost no rank correlation with the target. That suggests `Time_taken (min)` may measure pickup-to-delivery travel time rather than order-to-delivery time. The exact start point should be confirmed before modeling. Regardless of the answer, `Time_Order_picked` and pickup delay are unavailable at order placement and must stay out of the feature set.
     """)
     return
 
@@ -1544,56 +1448,43 @@ def _(mo):
 
     ### Problems and proposed fixes
 
-    - Literal `"NaN"` strings: parse as nulls and add informative missingness
-      indicators.
-    - Mixed time formats: normalize `HH:MM`, fractional-day values, `1` (24:00),
-      and `24:xx:00` to minutes since midnight.
+    - Literal `"NaN"` strings: parse as nulls and add informative missingness indicators.
+    - Mixed time formats: normalize `HH:MM`, fractional-day values, `1` (24:00), and `24:xx:00` to minutes since midnight.
     - `Metropolitian` spelling: normalize to `Metropolitan`.
-    - Ratings above 5.0: clip to 5.0 or retain with an out-of-range flag.
+    - Ratings above 5.00: clip to 5.00 or retain with an out-of-range flag.
     - Courier ages below 18: flag rather than silently drop or clip.
-    - Invalid coordinates: keep the 3,640 rows, add a validity flag, and leave
-      distance missing.
-    - Sign-flipped restaurant coordinates: test an `abs()` repair for the 431
-      affected rows.
-    - Suspicious festival missingness: evaluate with and without a
-      `festival_missing` indicator.
-    - Target definition: confirm whether the target starts at order placement
-      or pickup.
+    - Invalid coordinates: keep the 3,640 rows, add a validity flag, and leave distance missing.
+    - Sign-flipped restaurant coordinates: test an `abs()` repair for the 431 affected rows.
+    - Suspicious festival missingness: evaluate with and without a `festival_missing` indicator.
+    - Target definition: confirm whether the target starts at order placement or pickup.
     - Duplicate rows: none found.
 
     ### Potential features
 
     - Distance: `distance_km`, `coordinates_invalid`, coordinate-status flag.
-    - Categorical context: `Road_traffic_density`, `Weather_conditions`, `City`,
-      `Festival`, `Type_of_vehicle`.
+    - Categorical context: `Road_traffic_density`, `Weather_conditions`, `City`, `Festival`, `Type_of_vehicle`.
     - Ordinal: `Vehicle_condition`.
     - Count: `multiple_deliveries` and `has_multiple_deliveries`.
     - Courier: `Delivery_person_Age`, `Delivery_person_Ratings`.
-    - Time: `order_hour`, `is_rush_hour`, `is_meal_period`,
-      `time_order_missing`.
-    - Missingness: `city_missing`, `multiple_missing`, and optionally
-      `festival_missing`.
-    - Weak or excluded: `Type_of_order`, `day_of_week`, `is_weekend`,
-      `courier_delivery_count`, `Time_Order_picked`, `prep_min`.
+    - Time: `order_hour`, `is_rush_hour`, `is_meal_period`, `time_order_missing`.
+    - Missingness: `city_missing`, `multiple_missing`, and optionally `festival_missing`.
+    - Weak or excluded: `Type_of_order`, `day_of_week`, `is_weekend`, `courier_delivery_count`, `Time_Order_picked`, `prep_min`.
 
     ### Potential feature engineering
 
     - Haversine distance for valid or repaired coordinates.
     - `abs()` repair for sign-flipped restaurant coordinates, with a flag.
-    - Distance bins or deciles for the linear baseline; raw distance for
-      XGBoost.
+    - Distance bins or deciles for the linear baseline; raw distance for XGBoost.
     - Cyclical hour encoding for the linear baseline; raw hour for XGBoost.
     - Ordinal encoding for traffic and vehicle condition.
     - One-hot encoding for weather, city, and vehicle type.
     - Multiple-delivery count plus a binary flag.
     - Age bins and rating bins for the linear baseline; raw values for XGBoost.
     - Rating clipping and out-of-range flags.
-    - Missingness indicators for city and multiple deliveries; test festival
-      missingness separately.
+    - Missingness indicators for city and multiple deliveries; test festival missingness separately.
     - Courier-level target encoding only with out-of-fold validation.
 
-    The feature engineering decisions are documented in the feature engineering
-    notebook.
+    The feature engineering decisions are documented in the feature engineering notebook.
     """)
     return
 

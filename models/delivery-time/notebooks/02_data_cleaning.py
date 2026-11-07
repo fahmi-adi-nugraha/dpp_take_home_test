@@ -11,11 +11,7 @@ def _(mo):
 
     ## Objective
 
-    Convert the raw Zomato delivery dataset into a typed, auditable cleaned
-    dataset for feature engineering and model training. The target is
-    `Time_taken (min)`, interpreted as total delivery time starting at order
-    placement. This notebook keeps the raw data immutable and writes both
-    Parquet and CSV outputs under `data/processed/`.
+    Convert the raw Zomato delivery dataset into a typed, auditable cleaned dataset for feature engineering and model training. The target is `Time_taken (min)`, interpreted as total delivery time starting at order placement. This notebook keeps the raw data immutable and writes both Parquet and CSV outputs under `data/processed/`.
 
     ## Inputs
 
@@ -24,9 +20,7 @@ def _(mo):
     - **Columns:** 20
     - **Data dictionary:** [`../DATA_DICTIONARY.md`](../DATA_DICTIONARY.md)
 
-    The cleaning notebook does not impute model features. It parses types,
-    standardizes representations, flags anomalies, and preserves missing values
-    for the model pipeline.
+    The cleaning notebook does not impute model features. It parses types, standardizes representations, flags anomalies, and preserves missing values for the model pipeline.
     """)
     return
 
@@ -41,6 +35,8 @@ def _():
     matplotlib.use("Agg")
     import plotnine as p9
     import polars as pl
+
+    pl.Config.set_float_precision(2)
 
     from delivery_time import config
     from delivery_time.data import (
@@ -88,13 +84,10 @@ def _(clean_data, load_raw_data, mo):
     cleaned = clean_data(raw)
     mo.md(
         f"""
-        Loaded **{raw.height:,} raw rows × {raw.width} columns** and built a
-        cleaned frame with **{cleaned.height:,} rows × {cleaned.width} columns**.
+    Loaded **{raw.height:,} raw rows × {raw.width} columns** and built a cleaned frame with **{cleaned.height:,} rows × {cleaned.width} columns**.
 
-        The cleaned frame keeps identifiers, parsed timestamps, raw and derived
-        courier attributes, coordinate-quality flags, missingness indicators,
-        normalized categories, and the target.
-        """
+    The cleaned frame keeps identifiers, parsed timestamps, raw and derived courier attributes, coordinate-quality flags, missingness indicators, normalized categories, and the target.
+    """
     )
     return cleaned, raw
 
@@ -104,9 +97,7 @@ def _(mo):
     mo.md("""
     ## 1. Input snapshot
 
-    The raw columns are all text, so the first pass is about understanding the
-    representations before parsing. I inspect the schema, the first rows, and
-    the raw time formats.
+    The raw columns are all text, so the first pass is about understanding the representations before parsing. We inspect the schema, the first rows, and the raw time formats.
     """)
     return
 
@@ -126,11 +117,7 @@ def _(raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The raw data is consistently rectangular: 45,584 rows and 20 columns. The
-    missing values are literal `"NaN"` strings rather than nulls, and the time
-    columns mix normal clock times with fractional-day and after-midnight
-    representations. These representations need explicit parsing before they
-    can be used as features.
+    The raw data is consistently rectangular: 45,584 rows and 20 columns. The missing values are literal `"NaN"` strings rather than nulls, and the time columns mix normal clock times with fractional-day and after-midnight representations. These representations need explicit parsing before they can be used as features.
     """)
     return
 
@@ -145,7 +132,7 @@ def _(mo):
     | Missing values encoded as text | `"NaN"` appears across age, ratings, time, weather, traffic, multiple deliveries, festival, and city | Parse as null and add missingness indicators | Compare raw token counts with cleaned null counts |
     | Mixed time formats | `HH:MM`, fractional day, `1`, and `24:xx:00` | Normalize to minutes since midnight | Show raw and parsed samples; check pickup delay range |
     | City spelling | `Metropolitian` | Normalize to `Metropolitan` | Value counts before/after |
-    | Ratings above 5.0 | 53 values above 5.0, all 6.0 | Flag and create clipped copy | Count flags and compare clipped range |
+    | Ratings above 5.00 | 53 values above 5.00, all 6.00 | Flag and create clipped copy | Count flags and compare clipped range |
     | Courier age below 18 | 38 rows | Flag and create clipped copy | Count flags and compare clipped range |
     | Invalid coordinates | 3,640 rows with zero/small paired coordinates | Flag; do not compute distance | Coordinate-status counts |
     | Sign-flipped coordinates | 431 rows | Flag and create repaired coordinates | Compare raw and repaired samples |
@@ -159,9 +146,7 @@ def _(mo):
     mo.md("""
     ## 3. Missing values
 
-    I keep missing values as nulls rather than imputing in the cleaning layer.
-    The model pipeline can choose an imputation strategy, while missingness
-    indicators preserve information that may be predictive.
+    We keep missing values as nulls rather than imputing in the cleaning layer. The model pipeline can choose an imputation strategy, while missingness indicators preserve information that may be predictive.
     """)
     return
 
@@ -197,10 +182,7 @@ def _(cleaned, pl, raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The raw and cleaned counts match for every field, which confirms that the
-    parser is treating every literal `"NaN"` as a null. Ratings, age, and order
-    time are the largest missingness groups; city and multiple deliveries are
-    smaller but potentially informative.
+    The raw and cleaned counts match for every field, which confirms that the parser is treating every literal `"NaN"` as a null. Ratings, age, and order time are the largest missingness groups; city and multiple deliveries are smaller but potentially informative.
     """)
     return
 
@@ -210,8 +192,7 @@ def _(mo):
     mo.md("""
     ## 4. Duplicate rows
 
-    The raw dataset has no duplicate rows. The check is retained in the cleaning
-    function so that future refreshes of the source data are protected.
+    The raw dataset has no duplicate rows. The check is retained in the cleaning function so that future refreshes of the source data are protected.
     """)
     return
 
@@ -239,8 +220,7 @@ def _(cleaned, pl, raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    No rows are removed. The cleaning step is row-preserving; only
-    representations and derived flags change.
+    No rows are removed. The cleaning step is row-preserving; only representations and derived flags change.
     """)
     return
 
@@ -250,11 +230,7 @@ def _(mo):
     mo.md("""
     ## 5. Time normalization
 
-    The time fields need a common representation. I convert both order and
-    pickup times to minutes since midnight. This handles `HH:MM`, fractional-day
-    values, `1` meaning 24:00, and `24:xx:00` after-midnight values without
-    needing an arbitrary date. Pickup delay is retained only for audit and
-    leakage checks.
+    The time fields need a common representation. We convert both order and pickup times to minutes since midnight. This handles `HH:MM`, fractional-day values, `1` meaning 24:00, and `24:xx:00` after-midnight values without needing an arbitrary date. Pickup delay is retained only for audit and leakage checks.
     """)
     return
 
@@ -292,9 +268,7 @@ def _(cleaned, pl, raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The parsed samples confirm that `21:55` becomes `1315`, `0.833333333`
-    becomes `1200`, `1` becomes `1440`, and `24:05:00` becomes `1445`. Pickup
-    delay stays in the expected 5–15 minute range after normalization.
+    The parsed samples confirm that `21:55` becomes `1315`, the raw fractional-day value `0.833333333` becomes `1200`, `1` becomes `1440`, and `24:05:00` becomes `1445`. Pickup delay stays in the expected 5–15 minute range after normalization.
     """)
     return
 
@@ -304,9 +278,7 @@ def _(mo):
     mo.md("""
     ## 6. City, ratings, and age
 
-    I normalize the city spelling and create preserved raw, clipped, and flagged
-    versions of the courier attributes. The clipped versions are candidates for
-    the linear baseline; XGBoost can use the raw values and flags.
+    We normalize the city spelling and create preserved raw, clipped, and flagged versions of the courier attributes. The clipped versions are candidates for the linear baseline; XGBoost can use the raw values and flags.
     """)
     return
 
@@ -339,10 +311,7 @@ def _(cleaned, pl, raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The city typo affects the majority of rows and is safe to normalize.
-    Ratings above 5.0 and ages below 18 are small enough to flag rather than
-    drop. The cleaned frame keeps both raw and clipped values so the model
-    training stage can compare them.
+    The city typo affects the majority of rows and is safe to normalize. Ratings above 5.00 and ages below 18 are small enough to flag rather than drop. The cleaned frame keeps both raw and clipped values so the model training stage can compare them.
     """)
     return
 
@@ -352,10 +321,7 @@ def _(mo):
     mo.md("""
     ## 7. Coordinates
 
-    The coordinate fields contain two different failure modes: fully invalid
-    pairs and sign-flipped restaurant coordinates. I flag both, keep the invalid
-    rows, and create repaired restaurant coordinates for the sign-flipped cases.
-    Distance is computed later in feature engineering.
+    The coordinate fields contain two different failure modes: fully invalid pairs and sign-flipped restaurant coordinates. We flag both, keep the invalid rows, and create repaired restaurant coordinates for the sign-flipped cases. Distance is computed later in feature engineering.
     """)
     return
 
@@ -398,9 +364,7 @@ def _(THEME, coord_counts, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Most rows are valid. The 431 sign-flipped rows are repaired by taking the
-    absolute value of the restaurant coordinates; the 3,640 invalid pairs are
-    retained but will not receive a distance value.
+    Most rows are valid. The 431 sign-flipped rows are repaired by taking the absolute value of the restaurant coordinates; the 3,640 invalid pairs are retained but will not receive a distance value.
     """)
     return
 
@@ -410,9 +374,7 @@ def _(mo):
     mo.md("""
     ## 8. Target and leakage checks
 
-    The target is complete and remains integer-valued. Pickup time and prep time
-    are retained for diagnostics but marked as post-order fields; feature
-    engineering excludes them from the model-available set.
+    The target is complete and remains integer-valued. Pickup time and prep time are retained for diagnostics but marked as post-order fields; feature engineering excludes them from the model-available set.
     """)
     return
 
@@ -435,8 +397,7 @@ def _(cleaned, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The target remains between 10 and 54 minutes with a median of 26 and no
-    missing values. The cleaning step has not changed the target distribution.
+    The target remains between 10 and 54 minutes with a median of 26 and no missing values. The cleaning step has not changed the target distribution.
     """)
     return
 
@@ -446,8 +407,7 @@ def _(mo):
     mo.md("""
     ## 9. Validation summary
 
-    I compare row counts, column counts, duplicate counts, missing values, and
-    the target range before and after cleaning.
+    We compare row counts, column counts, duplicate counts, missing values, and the target range before and after cleaning.
     """)
     return
 
@@ -494,9 +454,7 @@ def _(cleaned, pl, raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Row and column counts are stable where expected: the row count is unchanged,
-    the column count grows because the cleaned frame adds parsed and flagged
-    fields, and the target distribution is preserved.
+    Row and column counts are stable where expected: the row count is unchanged, the column count grows because the cleaned frame adds parsed and flagged fields, and the target distribution is preserved.
     """)
     return
 
@@ -506,9 +464,7 @@ def _(mo):
     mo.md("""
     ## 10. Output
 
-    The canonical cleaned artifact is Parquet; the CSV copy is for convenience
-    and inspection. The manifest records source and output hashes, schema, row
-    counts, and the target definition.
+    The canonical cleaned artifact is Parquet; the CSV copy is for convenience and inspection. The manifest records source and output hashes, schema, row counts, and the target definition.
     """)
     return
 
@@ -572,10 +528,8 @@ def _(mo):
     - Literal `"NaN"` strings are parsed as nulls.
     - Mixed time formats are normalized to minutes since midnight.
     - `Metropolitian` is normalized to `Metropolitan`.
-    - Ratings above 5.0 and ages below 18 are flagged and preserved with clipped
-      alternatives.
-    - Invalid and sign-flipped coordinates are flagged; sign-flipped restaurant
-      coordinates are repaired.
+    - Ratings above 5.00 and ages below 18 are flagged and preserved with clipped alternatives.
+    - Invalid and sign-flipped coordinates are flagged; sign-flipped restaurant coordinates are repaired.
     - Duplicate rows are checked and none are removed.
     - The target is complete and unchanged.
 
@@ -585,8 +539,7 @@ def _(mo):
     - `data/processed/zomato_clean.csv`
     - `data/processed/zomato_clean_manifest.json`
 
-    **Next step:** `03_feature_engineering.py` builds the semantic feature frame
-    and feature sets from the cleaned Parquet artifact.
+    **Next step:** `03_feature_engineering.py` builds the semantic feature frame and feature sets from the cleaned Parquet artifact.
     """)
     return
 

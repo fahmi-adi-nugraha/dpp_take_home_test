@@ -77,6 +77,77 @@ uv run fetch-sentiment-data --revision main
 uv run fetch-sentiment-data --output-dir /tmp/yelp-raw
 ```
 
+## Training environment
+
+The training CLI is designed for local use. It reads data from `data/`, writes
+artifacts under `artifacts/`, and does not provision or manage remote compute.
+Training time depends heavily on the user's GPU; BERT fine-tuning and the ASHA
+search can take many hours on a laptop GPU and is generally impractical on CPU.
+
+For practical training, use a cloud GPU rental service; a cloud A100 instead of
+a laptop GPU drastically reduces wall-clock time. One option is
+[JarvisLabs](https://jarvislabs.ai). On the A100 instance used for this project,
+the complete Yelp training, evaluation, and export run took about 1 hour 50
+minutes.
+
+### Example JarvisLabs workflow
+
+Install and authenticate the `jl` CLI, then add the SSH key that will be used
+for the instance:
+
+```bash
+jl status --json
+jl ssh-key add ~/.ssh/id_ed25519.pub --name yelp-training
+```
+
+Create an instance. Copy the `machine_id` from the JSON output:
+
+```bash
+jl create --gpu A100 --storage 50 --name yelp-bert --yes --json
+```
+
+Upload the repository to the instance. Use `jl upload` for a quick transfer, or
+use `rsync` with excludes for `.git`, `.venv`, local artifacts, and local
+datasets. The data fetch command downloads the dataset again on the instance.
+
+```bash
+jl upload <machine_id> . /home/dpp_take_home_test
+```
+
+Start the full training pipeline as a managed run:
+
+```bash
+jl run --on <machine_id> --json --yes -- sh -lc '
+  cd /home/dpp_take_home_test &&
+  uv sync --all-packages &&
+  uv run fetch-sentiment-data &&
+  uv run train-sentiment-model &&
+  uv run evaluate-sentiment-models &&
+  uv run export-sentiment-model
+'
+```
+
+Monitor the run with the returned `run_id`:
+
+```bash
+jl run logs <run_id> --tail 50
+jl run status <run_id> --json
+```
+
+After the run succeeds, download the artifacts and tokenizer:
+
+```bash
+jl download <machine_id> \
+  /home/dpp_take_home_test/models/yelp-sentiment/artifacts \
+  ./models/yelp-sentiment/artifacts -r
+```
+
+Finally, destroy the instance so GPU and disk billing stop:
+
+```bash
+jl destroy <machine_id> --yes
+```
+
 ## Training and evaluation
 
 We use a reduced stratified hold-out split: **200,000** training rows,

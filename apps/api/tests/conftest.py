@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from inference_api.main import create_app
 from inference_api.registry import ModelStatus
 from inference_api.settings import Settings
+from yelp_sentiment.inference import SentimentPrediction
 
 
 class FakePredictor:
@@ -24,25 +25,55 @@ class FakePredictor:
         return DeliveryTimePrediction(prediction_minutes=27.42)
 
 
-class FakeRegistry:
-    """Registry stub with configurable delivery-time readiness."""
+class FakeSentimentPredictor:
+    """Small sentiment stub with the exported-model contract."""
 
-    def __init__(self, *, loaded: bool) -> None:
-        path = Path("models/delivery-time/artifacts/model.joblib")
-        self.delivery_time = FakePredictor() if loaded else None
+    model_name = "bert-base-uncased"
+    model_version = "1"
+
+    def predict(self, payload):
+        return SentimentPrediction(
+            label=4,
+            label_name="5 stars",
+            confidence=0.78,
+            probabilities=(0.01, 0.02, 0.04, 0.15, 0.78),
+            label_map={
+                0: "1 star",
+                1: "2 star",
+                2: "3 stars",
+                3: "4 stars",
+                4: "5 stars",
+            },
+        )
+
+
+class FakeRegistry:
+    """Registry stub with configurable delivery and sentiment readiness."""
+
+    def __init__(
+        self,
+        *,
+        delivery_loaded: bool = True,
+        sentiment_loaded: bool = True,
+    ) -> None:
+        delivery_path = Path("models/delivery-time/artifacts/model.joblib")
+        sentiment_path = Path("models/yelp-sentiment/artifacts/bert/model.pt")
+        self.delivery_time = FakePredictor() if delivery_loaded else None
+        self.sentiment = FakeSentimentPredictor() if sentiment_loaded else None
         self.delivery_time_status = ModelStatus(
             model="delivery-time",
-            loaded=loaded,
-            path=path,
-            error=None if loaded else "Model artifact is unavailable.",
-            model_version="1" if loaded else None,
-            selected_feature_set="plus_weather_group" if loaded else None,
+            loaded=delivery_loaded,
+            path=delivery_path,
+            error=None if delivery_loaded else "Model artifact is unavailable.",
+            model_version="1" if delivery_loaded else None,
+            selected_feature_set="plus_weather_group" if delivery_loaded else None,
         )
         self.sentiment_status = ModelStatus(
             model="sentiment",
-            loaded=False,
-            path=Path("models/yelp-sentiment/artifacts/bert/model"),
-            error="Sentiment inference is not implemented yet.",
+            loaded=sentiment_loaded,
+            path=sentiment_path,
+            error=None if sentiment_loaded else "Sentiment model is unavailable.",
+            model_version="1" if sentiment_loaded else None,
         )
 
     def load(self) -> None:
@@ -52,14 +83,29 @@ class FakeRegistry:
     def delivery_time_ready(self) -> bool:
         return self.delivery_time is not None
 
+    @property
+    def sentiment_ready(self) -> bool:
+        return self.sentiment is not None
+
+    @property
+    def all_ready(self) -> bool:
+        return self.delivery_time_ready and self.sentiment_ready
+
     def statuses(self) -> list[ModelStatus]:
         return [self.delivery_time_status, self.sentiment_status]
 
 
-def _client(*, loaded: bool) -> Iterator[TestClient]:
+def _client(
+    *,
+    delivery_loaded: bool = True,
+    sentiment_loaded: bool = True,
+) -> Iterator[TestClient]:
     app = create_app(
         settings=Settings(),
-        registry=FakeRegistry(loaded=loaded),
+        registry=FakeRegistry(
+            delivery_loaded=delivery_loaded,
+            sentiment_loaded=sentiment_loaded,
+        ),
     )
     with TestClient(app) as client:
         yield client
@@ -67,9 +113,14 @@ def _client(*, loaded: bool) -> Iterator[TestClient]:
 
 @pytest.fixture
 def loaded_client() -> Iterator[TestClient]:
-    yield from _client(loaded=True)
+    yield from _client()
 
 
 @pytest.fixture
 def unloaded_client() -> Iterator[TestClient]:
-    yield from _client(loaded=False)
+    yield from _client(delivery_loaded=False)
+
+
+@pytest.fixture
+def sentiment_unloaded_client() -> Iterator[TestClient]:
+    yield from _client(sentiment_loaded=False)

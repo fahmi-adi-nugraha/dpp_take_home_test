@@ -15,5 +15,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_ignore_empty=True, extra="ignore")
 
     delivery_model_path: Path = REPO_ROOT / "models/delivery-time/artifacts/model.joblib"
-    sentiment_model_path: Path = REPO_ROOT / "models/yelp-sentiment/artifacts/bert/model"
+    sentiment_model_path: Path = REPO_ROOT / "models/yelp-sentiment/artifacts/bert/model.pt"
+    sentiment_tokenizer_path: Path = REPO_ROOT / "models/yelp-sentiment/artifacts/bert/tokenizer"
     log_level: str = "INFO"

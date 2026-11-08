@@ -156,16 +156,26 @@ class ModelsResponse(BaseModel):
 
 
 class SentimentRequest(BaseModel):
-    """Review text for the future sentiment endpoint."""
+    """Review text for sentiment inference."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "text": "The food was great and the delivery was fast.",
+            }
+        },
+    )
 
     text: str = Field(min_length=1, max_length=10_000)
 
 
 class SentimentResponse(BaseModel):
-    """Sentiment prediction contract for the future endpoint."""
+    """Five-class sentiment prediction and model metadata."""
 
-    label: str
-    score: float
+    label: int
+    label_name: str
+    confidence: float
     probabilities: dict[str, float]
+    model: str
+    model_version: str | None = None

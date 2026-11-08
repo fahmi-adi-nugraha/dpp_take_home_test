@@ -2,9 +2,8 @@
 
 ## Overview
 
-Local-only FastAPI inference service for the take-home models. The delivery-time
-endpoint is implemented. The sentiment route is scaffolded and returns `501`
-until the Yelp BERT model is integrated.
+Local-only FastAPI inference service for the take-home models. Both the
+delivery-time and Yelp sentiment endpoints are implemented.
 
 The service has no database, authentication, or external service dependencies.
 
@@ -15,7 +14,7 @@ The service has no database, authentication, or external service dependencies.
 | `GET` | `/health` | Service and model readiness |
 | `GET` | `/models` | Loaded model names and status |
 | `POST` | `/predict/delivery-time` | Delivery-time regression |
-| `POST` | `/predict/sentiment` | Reserved sentiment classification endpoint |
+| `POST` | `/predict/sentiment` | Five-class Yelp review sentiment classification |
 
 ## Run locally
 
@@ -84,27 +83,59 @@ curl -X POST http://127.0.0.1:8000/predict/delivery-time \
 If coordinates or order time are missing, the prediction still returns, and the
 `warnings` list explains which inputs used the model's missing-value handling.
 
+## Sentiment request
+
+The sentiment endpoint accepts one review and returns the five-class
+distribution. Text is truncated to the model maximum length of 256 tokens.
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict/sentiment \
+  -H "Content-Type: application/json" \
+  -d '{"text": "The food was great and the delivery was fast."}'
+```
+
+### Example response
+
+```json
+{
+  "label": 3,
+  "label_name": "4 stars",
+  "confidence": 0.52,
+  "probabilities": {
+    "1 star": 0.02,
+    "2 star": 0.02,
+    "3 stars": 0.06,
+    "4 stars": 0.52,
+    "5 stars": 0.38
+  },
+  "model": "bert-base-uncased",
+  "model_version": "1"
+}
+```
+
 ## Health and model status
 
-`GET /health` returns `200` with `status: "ok"` when the delivery-time model is
-loaded, or `status: "degraded"` when it is unavailable. The sentiment model is
-reported as not implemented.
+`GET /health` returns `200` with `status: "ok"` when both models are loaded, or
+`status: "degraded"` when either artifact is unavailable. Each model's readiness
+is reported separately.
 
 `GET /models` returns the same per-model readiness details as a list.
 
 ## Error behavior
 
 - Invalid request fields return FastAPI's normal `422`.
-- A missing delivery-time artifact returns `503` from the prediction endpoint.
-- The sentiment endpoint returns `501`.
+- A missing delivery-time artifact returns `503` from the delivery endpoint.
+- A missing sentiment artifact returns `503` from the sentiment endpoint.
 - The application still starts if a model artifact is missing.
 
 ## Configuration
 
 - `DELIVERY_MODEL_PATH`: path to the classical ML artifact. Defaults to
   `models/delivery-time/artifacts/model.joblib`.
-- `SENTIMENT_MODEL_PATH`: path to the NLP model directory. Reserved for the
-  future sentiment integration.
+- `SENTIMENT_MODEL_PATH`: path to the exported PyTorch bundle. Defaults to
+  `models/yelp-sentiment/artifacts/bert/model.pt`.
+- `SENTIMENT_TOKENIZER_PATH`: path to the exported tokenizer directory.
+  Defaults to `models/yelp-sentiment/artifacts/bert/tokenizer`.
 - `LOG_LEVEL`: application log level, default `INFO`.
 
 For local runs, copy `.env.example` to `.env` and load it explicitly:
@@ -115,9 +146,11 @@ uv run --env-file .env uvicorn inference_api.main:app --reload
 
 ## Model loading
 
-- The delivery-time pipeline is loaded once during application startup.
-- `model_metadata.json` and `feature_schema.json` beside the artifact provide
-  the feature order and model metadata.
+- Both models are loaded once during application startup.
+- The delivery-time pipeline reads `model_metadata.json` and
+  `feature_schema.json` beside its artifact.
+- The sentiment bundle reads `model.pt` and the sibling tokenizer directory.
+  Build it with `uv run export-sentiment-model` from the Yelp project.
 - Missing artifacts do not crash the process; readiness is exposed through
   `/health` and `/models`.
 
@@ -130,13 +163,6 @@ uv run --env-file .env uvicorn inference_api.main:app --reload
 - Version artifacts by Git commit or date and keep a short model card.
 
 This is a plan only; request-level monitoring is not implemented yet.
-
-## Adding the sentiment endpoint
-
-1. Add a sentiment predictor in `models/yelp-sentiment/src/yelp_sentiment/inference.py`.
-2. Register it in `ModelRegistry`.
-3. Replace the `501` in `routers/sentiment.py` with the real prediction call.
-4. Add tests under `apps/api/tests/`.
 
 ## Limitations
 

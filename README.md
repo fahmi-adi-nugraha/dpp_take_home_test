@@ -5,9 +5,8 @@ projects and a local FastAPI inference service, managed as a single `uv`
 workspace.
 
 > **Status:** both model projects have completed data preparation, training,
-> evaluation, and reports. The delivery-time REST endpoint is implemented; the
-> sentiment endpoint is scaffolded and returns `501` until the Yelp model is
-> integrated.
+> evaluation, reports, and deployment exports. Both the delivery-time and Yelp
+> sentiment REST endpoints are implemented.
 
 ## Projects
 
@@ -171,10 +170,9 @@ intended future slot for the optional UI.
 
 Classical ML data fetching, EDA, data cleaning, feature engineering, model
 training, and evaluation are implemented. NLP data fetching, EDA, cleaning,
-feature engineering, training, and evaluation are implemented. The delivery-time
-REST endpoint is implemented. Still pending:
+feature engineering, training, evaluation, and export are implemented. The
+delivery-time and sentiment REST endpoints are implemented. Still pending:
 
-- sentiment API integration
 - optional Streamlit UI
 - final report and presentation
 

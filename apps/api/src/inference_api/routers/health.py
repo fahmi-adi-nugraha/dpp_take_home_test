@@ -30,7 +30,7 @@ def health(
 ) -> HealthResponse:
     """Report service health and model readiness."""
     return HealthResponse(
-        status="ok" if registry.delivery_time_ready else "degraded",
+        status="ok" if registry.all_ready else "degraded",
         models=[_status_response(status) for status in registry.statuses()],
     )
 

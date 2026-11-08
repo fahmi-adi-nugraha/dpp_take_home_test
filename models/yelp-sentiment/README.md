@@ -64,6 +64,7 @@ uv run marimo edit models/yelp-sentiment/notebooks/04_finetune.py
 uv run marimo edit models/yelp-sentiment/notebooks/05_evaluate.py
 uv run train-sentiment-model
 uv run evaluate-sentiment-models
+uv run export-sentiment-model
 uv run pytest models/yelp-sentiment/tests
 ```
 
@@ -100,21 +101,44 @@ The selected BERT configuration uses `learning_rate=4.6878e-05`,
 `0.1`, dropout `0.2/0.1`, `max_length=256`, and 3 epochs. Exact parameter sets
 and trial histories are stored in the artifact directories.
 
+## Deployment export
+
+The training pipeline keeps the Hugging Face checkpoint and exports a
+deployment-friendly state-dict bundle:
+
+```text
+artifacts/bert/model.pt
+artifacts/bert/tokenizer/
+artifacts/bert/export_manifest.json
+```
+
+The `.pt` bundle stores the model config, state dict, maximum sequence length,
+label map, training parameters, and final test metrics. The export command
+verifies that the reloaded bundle reproduces the source model probabilities
+before it succeeds. `train-sentiment-model` also exports the bundle at the end
+of future BERT refits.
+
 ## Artifact contract
 
 - `artifacts/logistic/`: TF-IDF logistic best parameters, fitted pipeline,
   tuning trials, and validation metrics.
-- `artifacts/bert/`: Hugging Face `save_pretrained` model plus tokenizer,
-  best parameters, training history, tuning trials, and validation metrics.
+- `artifacts/bert/model/`: Hugging Face `save_pretrained` source model.
+- `artifacts/bert/model.pt`: exported deployment state-dict bundle.
+- `artifacts/bert/tokenizer/`: tokenizer files used by the exported model.
+- `artifacts/bert/export_manifest.json`: export metadata and test metrics.
+- `artifacts/bert/`: best parameters, training history, tuning trials, and
+  validation metrics.
 - `artifacts/evaluation/`: final test metrics, per-class metrics, confusion
   matrices, hyperparameter table, test predictions, and comparison report.
 
-The API reads the BERT model through `SENTIMENT_MODEL_PATH`, defaulting to
-`models/yelp-sentiment/artifacts/bert/model`.
+The API reads the exported bundle through `SENTIMENT_MODEL_PATH`, defaulting to
+`models/yelp-sentiment/artifacts/bert/model.pt`, and the tokenizer through
+`SENTIMENT_TOKENIZER_PATH`, defaulting to
+`models/yelp-sentiment/artifacts/bert/tokenizer`.
 
 ## Status
 
 Data fetching, validation, data dictionary, EDA, data cleaning, feature
-engineering, fine-tuning, evaluation, and reports are implemented. The reports
-are `notebooks/01_eda.py` through `notebooks/05_evaluate.py`. API integration
-remains to be implemented.
+engineering, fine-tuning, evaluation, reports, deployment export, and API
+integration are implemented. The reports are `notebooks/01_eda.py` through
+`notebooks/05_evaluate.py`.

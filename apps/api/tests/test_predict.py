@@ -18,6 +18,10 @@ DELIVERY_PAYLOAD = {
     "courier_rating": 4.7,
 }
 
+SENTIMENT_PAYLOAD = {
+    "text": "The food was great and the delivery was fast.",
+}
+
 
 def test_predict_delivery_time(loaded_client: TestClient) -> None:
     response = loaded_client.post("/predict/delivery-time", json=DELIVERY_PAYLOAD)
@@ -42,7 +46,7 @@ def test_predict_rejects_invalid_coordinates(loaded_client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_predict_returns_503_when_model_is_unavailable(
+def test_predict_returns_503_when_delivery_model_is_unavailable(
     unloaded_client: TestClient,
 ) -> None:
     response = unloaded_client.post("/predict/delivery-time", json=DELIVERY_PAYLOAD)
@@ -51,11 +55,32 @@ def test_predict_returns_503_when_model_is_unavailable(
     assert "unavailable" in response.json()["detail"].lower()
 
 
-def test_sentiment_endpoint_is_not_implemented(loaded_client: TestClient) -> None:
-    response = loaded_client.post(
+def test_predict_sentiment(loaded_client: TestClient) -> None:
+    response = loaded_client.post("/predict/sentiment", json=SENTIMENT_PAYLOAD)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["label"] == 4
+    assert body["label_name"] == "5 stars"
+    assert body["confidence"] == 0.78
+    assert body["probabilities"]["5 stars"] == 0.78
+    assert body["model"] == "bert-base-uncased"
+    assert body["model_version"] == "1"
+
+
+def test_predict_sentiment_returns_503_when_model_is_unavailable(
+    sentiment_unloaded_client: TestClient,
+) -> None:
+    response = sentiment_unloaded_client.post(
         "/predict/sentiment",
-        json={"text": "The food was great and the delivery was fast."},
+        json=SENTIMENT_PAYLOAD,
     )
 
-    assert response.status_code == 501
-    assert "not available" in response.json()["detail"].lower()
+    assert response.status_code == 503
+    assert "unavailable" in response.json()["detail"].lower()
+
+
+def test_predict_sentiment_rejects_empty_text(loaded_client: TestClient) -> None:
+    response = loaded_client.post("/predict/sentiment", json={"text": ""})
+
+    assert response.status_code == 422

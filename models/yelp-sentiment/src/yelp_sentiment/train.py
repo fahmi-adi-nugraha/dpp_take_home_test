@@ -592,6 +592,14 @@ def train_bert(
         },
     )
     _write_parquet(config.BERT_TUNING_TRIALS_PATH, trials)
+
+    from yelp_sentiment.export import export_bert_model
+
+    export_bert_model(
+        model,
+        tokenizer,
+        evaluation_path=None,
+    )
     torch.cuda.empty_cache()
     return params
 

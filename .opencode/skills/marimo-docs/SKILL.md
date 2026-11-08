@@ -181,9 +181,20 @@ Avoid deep dives, long derivations, and restating the code. The notebook is a re
 - Prefer readable sizes. A typical report plot is around `7–9 × 4–6` inches.
 - Use `p9.coord_flip()` for horizontal bar charts.
 - Use `pl.Enum` / `pl.Categorical` for controlled categorical order.
-- For distribution comparisons, a violin plus a narrow boxplot overlay is
-  acceptable when it adds information.
-- Use `p9.theme(legend_position="none")` when the legend repeats the x-axis.
+- Draw distribution comparisons as violin plots with a narrow box plot
+  overlaid, not as standalone box plots:
+
+  ```python
+  p9.ggplot(df, p9.aes(x="group", y="value", fill="group"))
+  + p9.geom_violin(alpha=0.5)
+  + p9.geom_boxplot(width=0.1, outlier_size=0.4, outlier_alpha=0.25)
+  ```
+
+- When using `facet_wrap`, set `fill` to the same variable used for faceting so
+  each panel keeps a consistent color. Keep `geom_violin` first and overlay the
+  narrow `geom_boxplot`.
+- Use `p9.theme(legend_position="none")` when the legend repeats the x-axis or
+  faceting variable.
 - Keep titles and subtitles specific enough to stand alone.
 
 ### Saving plots

@@ -467,11 +467,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo, raw):
-    mo.md(
-        f"""
+    mo.md(f"""
     Duplicate rows: **{raw.is_duplicated().sum()}**. Unique delivery IDs: **{raw['ID'].n_unique():,}**. Rows: **{raw.height:,}**.
-    """
-    )
+    """)
     return
 
 
@@ -743,7 +741,7 @@ def _(df, pl):
 def _(THEME, df, long_box, p9, save_plot):
     _box_df = long_box(df, ["traffic", "weather"], ["Traffic density", "Weather"])
     _plot = (
-        p9.ggplot(_box_df, p9.aes(x="value", y="target", fill="value"))
+        p9.ggplot(_box_df, p9.aes(x="value", y="target", fill="feature"))
         + p9.geom_violin(alpha=0.5)
         + p9.geom_boxplot(width=0.1, outlier_size=0.4, outlier_alpha=0.25)
         + p9.facet_wrap("feature", scales="free_x", ncol=2)
@@ -812,7 +810,7 @@ def _(THEME, df, long_box, p9, save_plot):
         ["Vehicle type", "City", "Festival", "Multiple deliveries"],
     )
     _plot = (
-        p9.ggplot(_box_df, p9.aes(x="value", y="target", fill="value"))
+        p9.ggplot(_box_df, p9.aes(x="value", y="target", fill="feature"))
         + p9.geom_violin(alpha=0.5)
         + p9.geom_boxplot(width=0.1, outlier_size=0.4, outlier_alpha=0.25)
         + p9.facet_wrap("feature", scales="free", ncol=2)
@@ -1113,7 +1111,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(THEME, df, p9, save_plot):
     _plot = (
-        p9.ggplot(df, p9.aes(x="coord_status", y="target", fill="coord_status"))
+        p9.ggplot(df, p9.aes(x="coord_status", y="target"))
         + p9.geom_violin(alpha=0.5)
         + p9.geom_boxplot(width=0.1, outlier_size=0.4, outlier_alpha=0.25)
         + THEME

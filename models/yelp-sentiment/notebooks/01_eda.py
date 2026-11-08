@@ -475,11 +475,15 @@ def _(LABEL_ORDER, THEME, config, p9, pl, sample_tbl, save_plot):
         .alias("label_name")
     )
     _plot = (
-        p9.ggplot(_plot_df, p9.aes(x="label_name", y="decoded_chars"))
-        + p9.geom_boxplot(fill="#4C78A8", color="#333333")
+        p9.ggplot(
+            _plot_df,
+            p9.aes(x="label_name", y="decoded_chars", fill="label_name"),
+        )
+        + p9.geom_violin(alpha=0.5)
+        + p9.geom_boxplot(width=0.1, outlier_size=0.4, outlier_alpha=0.25)
         + p9.coord_cartesian(ylim=(0, 2000))
         + THEME
-        + p9.theme(figure_size=(8, 5))
+        + p9.theme(figure_size=(8, 5), legend_position="none")
         + p9.labs(
             title="Decoded review length by star rating",
             subtitle="Stratified 50k sample; y-axis clipped at 2,000 characters",

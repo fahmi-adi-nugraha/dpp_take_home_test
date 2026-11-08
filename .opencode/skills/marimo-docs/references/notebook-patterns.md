@@ -114,6 +114,32 @@ def _(THEME, p9, save_plot, summary_tbl):
     return
 ```
 
+## Distribution comparison plot
+
+Use a violin with a narrow box plot overlay instead of a standalone box plot.
+When faceting, fill on the same variable used by `facet_wrap`.
+
+```python
+@app.cell(hide_code=True)
+def _(THEME, df, p9, save_plot):
+    _plot = (
+        p9.ggplot(df, p9.aes(x="group", y="value", fill="group"))
+        + p9.geom_violin(alpha=0.5)
+        + p9.geom_boxplot(width=0.1, outlier_size=0.4, outlier_alpha=0.25)
+        + p9.facet_wrap("group", scales="free_x")
+        + THEME
+        + p9.theme(figure_size=(8, 5), legend_position="none")
+        + p9.labs(
+            title="Value distribution by group",
+            x="",
+            y="Value",
+        )
+    )
+    _path = save_plot(_plot, "value_distribution.png", width=8, height=5)
+    _plot
+    return
+```
+
 ## Observation cell
 
 Place directly after the related table/plot group. Keep it brief.

@@ -7,7 +7,11 @@ from types import SimpleNamespace
 import pytest
 import torch
 from yelp_sentiment import config
-from yelp_sentiment.inference import SentimentInput, SentimentPredictor
+from yelp_sentiment.inference import (
+    SentimentInput,
+    SentimentPredictor,
+    resolve_device,
+)
 
 
 class FakeTokenizer:
@@ -48,6 +52,40 @@ def test_predict_returns_probabilities_and_label() -> None:
     assert len(result.probabilities) == 5
     assert sum(result.probabilities) == pytest.approx(1.0)
     assert result.probabilities_by_label["5 stars"] == pytest.approx(result.confidence)
+
+
+def test_resolve_device_force_cpu(monkeypatch) -> None:
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+
+    assert resolve_device("cpu") == torch.device("cpu")
+
+
+def test_resolve_device_auto_prefers_cuda(monkeypatch) -> None:
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+
+    assert resolve_device("auto") == torch.device("cuda")
+
+
+def test_resolve_device_auto_falls_back_to_cpu(monkeypatch) -> None:
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 0)
+
+    assert resolve_device("auto") == torch.device("cpu")
+
+
+def test_resolve_device_forced_cuda_requires_a_device(monkeypatch) -> None:
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 0)
+
+    with pytest.raises(RuntimeError, match="CUDA"):
+        resolve_device("cuda")
+
+
+def test_resolve_device_rejects_unknown_preference() -> None:
+    with pytest.raises(ValueError, match="Unsupported device preference"):
+        resolve_device("tpu")
 
 
 def test_predictor_loads_the_exported_artifact_if_available() -> None:

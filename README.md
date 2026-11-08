@@ -183,6 +183,7 @@ schemas, error behavior, and configuration.
 - `DELIVERY_MODEL_PATH` overrides the delivery-time pipeline artifact.
 - `SENTIMENT_MODEL_PATH` overrides the exported sentiment `.pt` bundle.
 - `SENTIMENT_TOKENIZER_PATH` overrides the sentiment tokenizer directory.
+- `SENTIMENT_DEVICE` selects `auto`, `cpu`, or `cuda` sentiment inference.
 - `LOG_LEVEL` controls API logging, defaulting to `INFO`.
 
 ## Data and artifact policy

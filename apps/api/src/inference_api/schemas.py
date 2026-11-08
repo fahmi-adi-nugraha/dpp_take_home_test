@@ -140,6 +140,7 @@ class ModelStatusResponse(BaseModel):
     error: str | None = None
     model_version: str | None = None
     selected_feature_set: str | None = None
+    device: str | None = None
 
 
 class HealthResponse(BaseModel):

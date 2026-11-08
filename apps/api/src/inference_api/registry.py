@@ -5,11 +5,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from delivery_time.inference import DeliveryTimePredictor
-from yelp_sentiment.inference import SentimentPredictor
 
 from .settings import Settings
+
+if TYPE_CHECKING:
+    from yelp_sentiment.inference import SentimentPredictor
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,7 @@ class ModelStatus:
     error: str | None = None
     model_version: str | None = None
     selected_feature_set: str | None = None
+    device: str | None = None
 
 
 class ModelRegistry:
@@ -76,9 +80,12 @@ class ModelRegistry:
 
     def _load_sentiment(self) -> None:
         try:
+            from yelp_sentiment.inference import SentimentPredictor
+
             self.sentiment = SentimentPredictor.load(
                 self.settings.sentiment_model_path,
                 self.settings.sentiment_tokenizer_path,
+                device=self.settings.sentiment_device,
             )
         except Exception as exc:
             self.sentiment = None
@@ -96,8 +103,13 @@ class ModelRegistry:
             loaded=True,
             path=self.settings.sentiment_model_path,
             model_version=self.sentiment.model_version,
+            device=str(self.sentiment.device),
         )
-        logger.info("Loaded sentiment model from %s", self.settings.sentiment_model_path)
+        logger.info(
+            "Loaded sentiment model from %s on %s",
+            self.settings.sentiment_model_path,
+            self.sentiment.device,
+        )
 
     @property
     def delivery_time_ready(self) -> bool:

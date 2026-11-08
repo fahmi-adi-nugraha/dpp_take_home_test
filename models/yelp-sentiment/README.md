@@ -119,6 +119,19 @@ verifies that the reloaded bundle reproduces the source model probabilities
 before it succeeds. `train-sentiment-model` also exports the bundle at the end
 of every BERT refit.
 
+## Inference device
+
+`SentimentPredictor` resolves the inference device from `auto`, `cpu`, or
+`cuda`:
+
+- `auto` uses CUDA when a usable CUDA-enabled PyTorch runtime and GPU are
+  available, otherwise CPU.
+- `cpu` forces CPU.
+- `cuda` requires a usable CUDA device and raises a clear error instead of
+  silently falling back.
+
+The REST API exposes this through `SENTIMENT_DEVICE`, defaulting to `auto`.
+
 ## Artifact contract
 
 - `artifacts/logistic/`: TF-IDF logistic best parameters, fitted pipeline,

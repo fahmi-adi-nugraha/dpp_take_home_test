@@ -124,7 +124,7 @@ curl -X POST http://127.0.0.1:8000/predict/sentiment \
 
 `GET /health` returns `200` with `status: "ok"` when both models are loaded, or
 `status: "degraded"` when either artifact is unavailable. Each model's readiness
-is reported separately.
+is reported separately, and the sentiment entry includes the active device.
 
 `GET /models` returns the same per-model readiness details as a list.
 
@@ -143,12 +143,41 @@ is reported separately.
   `models/yelp-sentiment/artifacts/bert/model.pt`.
 - `SENTIMENT_TOKENIZER_PATH`: path to the exported tokenizer directory.
   Defaults to `models/yelp-sentiment/artifacts/bert/tokenizer`.
+- `SENTIMENT_DEVICE`: inference device policy. One of `auto`, `cpu`, or `cuda`.
+  Defaults to `auto`.
 - `LOG_LEVEL`: application log level, default `INFO`.
+
+### Sentiment device policy
+
+| Value | Behavior |
+|---|---|
+| `auto` | Use CUDA when a usable CUDA-enabled PyTorch runtime and GPU are available; otherwise use CPU |
+| `cpu` | Force CPU even when CUDA is available |
+| `cuda` | Require a usable CUDA device; report the sentiment model as unavailable rather than silently falling back |
+
+The selected device is reported in `/health` and `/models`:
+
+```json
+{
+  "model": "sentiment",
+  "loaded": true,
+  "device": "cpu",
+  "model_version": "1",
+  "error": null
+}
+```
 
 For local runs, copy `.env.example` to `.env` and load it explicitly:
 
 ```bash
 uv run --env-file .env uvicorn inference_api.main:app --reload
+```
+
+Force CPU or GPU directly:
+
+```bash
+SENTIMENT_DEVICE=cpu uv run uvicorn inference_api.main:app --reload
+SENTIMENT_DEVICE=cuda uv run uvicorn inference_api.main:app --reload
 ```
 
 ## Model loading

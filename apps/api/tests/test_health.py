@@ -17,6 +17,7 @@ def test_health_reports_ready_models(loaded_client: TestClient) -> None:
     assert statuses["delivery-time"]["selected_feature_set"] == "plus_weather_group"
     assert statuses["sentiment"]["loaded"] is True
     assert statuses["sentiment"]["model_version"] == "1"
+    assert statuses["sentiment"]["device"] == "cpu"
 
 
 def test_health_reports_degraded_without_delivery_model(

@@ -21,6 +21,7 @@ def _status_response(status: ModelStatus) -> ModelStatusResponse:
         error=status.error,
         model_version=status.model_version,
         selected_feature_set=status.selected_feature_set,
+        device=status.device,
     )
 
 

@@ -74,6 +74,7 @@ class FakeRegistry:
             path=sentiment_path,
             error=None if sentiment_loaded else "Sentiment model is unavailable.",
             model_version="1" if sentiment_loaded else None,
+            device="cpu" if sentiment_loaded else None,
         )
 
     def load(self) -> None:

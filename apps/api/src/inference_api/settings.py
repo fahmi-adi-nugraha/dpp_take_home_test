@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -17,4 +18,5 @@ class Settings(BaseSettings):
     delivery_model_path: Path = REPO_ROOT / "models/delivery-time/artifacts/model.joblib"
     sentiment_model_path: Path = REPO_ROOT / "models/yelp-sentiment/artifacts/bert/model.pt"
     sentiment_tokenizer_path: Path = REPO_ROOT / "models/yelp-sentiment/artifacts/bert/tokenizer"
+    sentiment_device: Literal["auto", "cpu", "cuda"] = "auto"
     log_level: str = "INFO"

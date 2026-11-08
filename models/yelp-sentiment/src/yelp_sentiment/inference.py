@@ -48,6 +48,41 @@ def load_model_bundle(path: Path) -> dict[str, Any]:
     return bundle
 
 
+def resolve_device(preference: str = "auto") -> torch.device:
+    """Resolve the requested inference device.
+
+    ``auto`` uses CUDA when a usable CUDA runtime is present and otherwise
+    falls back to CPU. ``cpu`` always forces CPU. ``cuda`` requires a usable
+    CUDA device and raises an error instead of silently falling back.
+    """
+    normalized = preference.strip().lower()
+    if normalized == "cpu":
+        return torch.device("cpu")
+    if normalized not in {"auto", "cuda"}:
+        raise ValueError(
+            f"Unsupported device preference '{preference}'. Use 'auto', 'cpu', or 'cuda'."
+        )
+
+    try:
+        cuda_available = torch.cuda.is_available() and torch.cuda.device_count() > 0
+    except Exception as exc:
+        if normalized == "cuda":
+            raise RuntimeError(
+                "CUDA was requested but the CUDA runtime could not be checked."
+            ) from exc
+        return torch.device("cpu")
+
+    if cuda_available:
+        return torch.device("cuda")
+    if normalized == "cuda":
+        raise RuntimeError(
+            "CUDA was requested but no usable CUDA device is available. "
+            "Install a CUDA-enabled PyTorch build and verify the GPU driver, "
+            "or use SENTIMENT_DEVICE=cpu."
+        )
+    return torch.device("cpu")
+
+
 @dataclass
 class SentimentPredictor:
     """Load and run the exported BERT sentiment model."""
@@ -66,7 +101,7 @@ class SentimentPredictor:
         model_path: Path,
         tokenizer_path: Path,
         *,
-        device: str | None = None,
+        device: str = "auto",
     ) -> SentimentPredictor:
         """Load a `.pt` bundle and its tokenizer."""
         if not model_path.is_file():
@@ -80,7 +115,7 @@ class SentimentPredictor:
         model.load_state_dict(bundle["state_dict"])
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
-        selected_device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        selected_device = resolve_device(device)
         model.to(selected_device)
         model.eval()
 

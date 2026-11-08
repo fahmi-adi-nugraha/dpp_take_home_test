@@ -25,6 +25,17 @@ The service has no database, authentication, or external service dependencies.
 
 ## Run locally
 
+Download the prebuilt model artifacts from the
+[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
+Verify the archive with the published SHA-256 file, then extract it from the
+repository root:
+
+```bash
+unzip -o /tmp/dpp-inference-models-v1.zip -d .
+```
+
+Install the workspace and start the service:
+
 ```bash
 uv sync --all-packages
 uv run uvicorn inference_api.main:app --reload
@@ -186,7 +197,8 @@ SENTIMENT_DEVICE=cuda uv run uvicorn inference_api.main:app --reload
 - The delivery-time pipeline reads `model_metadata.json` and
   `feature_schema.json` beside its artifact.
 - The sentiment bundle reads `model.pt` and the sibling tokenizer directory.
-  Build it with `uv run export-sentiment-model` from the Yelp project.
+  Build it with `uv run export-sentiment-model` from the Yelp project, or use
+  the prebuilt release artifact.
 - Missing artifacts do not crash the process; readiness is exposed through
   `/health` and `/models`.
 

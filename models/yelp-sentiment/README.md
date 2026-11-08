@@ -190,6 +190,12 @@ verifies that the reloaded bundle reproduces the source model probabilities
 before it succeeds. `train-sentiment-model` also exports the bundle at the end
 of every BERT refit.
 
+Prebuilt artifacts, including both project models and evaluation outputs, are
+available from the
+[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
+Download `dpp-inference-models-v1.zip`, verify it with the published SHA-256
+file, and extract it from the repository root.
+
 ## Inference device
 
 `SentimentPredictor` resolves the inference device from `auto`, `cpu`, or

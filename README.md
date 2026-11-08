@@ -100,6 +100,33 @@ uv run --env-file .env fetch-sentiment-data
 The field-level Zomato dataset dictionary is at
 [`models/delivery-time/DATA_DICTIONARY.md`](models/delivery-time/DATA_DICTIONARY.md).
 
+## Model artifacts
+
+The trained artifacts are published as a GitHub release:
+
+```text
+https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0
+```
+
+Download and verify the archive:
+
+```bash
+curl -L -o /tmp/dpp-inference-models-v1.zip \
+  https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/download/models-v1.0.0/dpp-inference-models-v1.zip
+curl -L -o /tmp/dpp-inference-models-v1.zip.sha256 \
+  https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/download/models-v1.0.0/dpp-inference-models-v1.zip.sha256
+(cd /tmp && sha256sum -c dpp-inference-models-v1.zip.sha256)
+```
+
+Extract it from the repository root so the API can find the artifacts:
+
+```bash
+unzip -o /tmp/dpp-inference-models-v1.zip -d .
+```
+
+The archive contains both the delivery-time pipeline and the Yelp sentiment
+bundle, plus their metadata, evaluation outputs, and checksums.
+
 ## Model commands
 
 ### Delivery time
@@ -189,7 +216,8 @@ schemas, error behavior, and configuration.
 ## Data and artifact policy
 
 - Raw, interim, and processed datasets are local and ignored by Git.
-- Trained model artifacts and deployment bundles are local and ignored by Git.
+- Trained model artifacts and deployment bundles are distributed through the
+  `models-v1.0.0` GitHub release and ignored by Git.
 - `.gitkeep` files preserve the directory structure in Git.
 - `uv.lock` is committed for reproducible dependency resolution.
 - `.venv/` is generated locally and ignored.

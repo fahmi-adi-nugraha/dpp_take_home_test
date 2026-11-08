@@ -151,3 +151,7 @@ constructs the 18 selected features in `src/delivery_time/inference.py`, and
 returns the predicted minutes plus any input-quality warnings. See
 [`../../apps/api/README.md`](../../apps/api/README.md) for the request contract
 and run command.
+
+Prebuilt model artifacts are available from the
+[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
+Extract the archive from the repository root before starting the API.

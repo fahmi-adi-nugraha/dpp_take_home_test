@@ -13,7 +13,7 @@ the Zomato Delivery Operations Analytics Dataset.
 - **Raw data location:** `data/raw/zomato/`
 - **Fetch command:** `uv run fetch-delivery-data`
 - **Data dictionary:** [DATA_DICTIONARY.md](DATA_DICTIONARY.md)
-- **Credentials:** optional. The dataset currently downloads anonymously. Set
+- **Credentials:** optional. The dataset downloads anonymously. Set
   `KAGGLE_USERNAME` and `KAGGLE_KEY` in `.env` to use authenticated requests.
 
 The fetched dataset contains 45,584 data rows and 20 columns. The confirmed
@@ -76,9 +76,11 @@ by Git.
 - `artifacts/`: trained model and metadata; not committed.
 - `tests/`: package tests.
 
-## Commands
+## Setup and usage
 
 ```bash
+uv sync --all-packages
+
 # Anonymous public download
 uv run fetch-delivery-data
 
@@ -101,7 +103,7 @@ uv run pytest models/delivery-time/tests
 
 ## Training and evaluation
 
-The training command runs an 80/10/10 random split, a Ridge linear baseline, a feature ablation over the baseline feature set, and randomized hyperparameter tuning for XGBoost. Ridge alpha and XGBoost were tuned with five-fold `RandomizedSearchCV` (20 and 30 draws, seed 42, negative RMSE). The selected feature set currently includes grouped weather (`weather_group`) based on validation RMSE. The final XGBoost model was refit on train + validation and evaluated once on test.
+The training command runs an 80/10/10 random split, a Ridge linear baseline, a feature ablation over the baseline feature set, and randomized hyperparameter tuning for XGBoost. Ridge alpha and XGBoost were tuned with five-fold `RandomizedSearchCV` (20 and 30 draws, seed 42, negative RMSE). The selected feature set includes grouped weather (`weather_group`) based on validation RMSE. The final XGBoost model was refit on train + validation and evaluated once on test.
 
 ### Final metrics and best hyperparameters
 
@@ -149,8 +151,3 @@ constructs the 18 selected features in `src/delivery_time/inference.py`, and
 returns the predicted minutes plus any input-quality warnings. See
 [`../../apps/api/README.md`](../../apps/api/README.md) for the request contract
 and run command.
-
-## Status
-
-Data fetching, EDA, data cleaning, feature engineering, model training,
-evaluation, and delivery-time API integration are implemented.

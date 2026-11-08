@@ -12,8 +12,8 @@ baseline.
 - **Alternative source:** <https://www.kaggle.com/datasets/yelp-dataset/yelp-dataset/data>
 - **Raw data location:** `data/raw/yelp_review_full/`
 - **Fetch command:** `uv run fetch-sentiment-data`
-- **Credentials:** not required for the public dataset; set `HF_TOKEN` only if
-  rate limits or future access restrictions require it.
+- **Credentials:** not required for the public dataset; set `HF_TOKEN` when
+  rate limits or access restrictions require it.
 
 The fetcher downloads the two parquet files from the Hugging Face dataset,
 pinned to commit `c1f9ee939b7d05667af864ee1cb066393154bf85`, and validates their
@@ -52,9 +52,10 @@ label counts, and the dataset revision.
 - `artifacts/`: trained model, tokenizer, and metadata; not committed.
 - `tests/`: package tests.
 
-## Commands
+## Setup and usage
 
 ```bash
+uv sync --all-packages
 uv run fetch-sentiment-data
 uv run --env-file .env fetch-sentiment-data
 uv run marimo edit models/yelp-sentiment/notebooks/01_eda.py
@@ -116,7 +117,7 @@ The `.pt` bundle stores the model config, state dict, maximum sequence length,
 label map, training parameters, and final test metrics. The export command
 verifies that the reloaded bundle reproduces the source model probabilities
 before it succeeds. `train-sentiment-model` also exports the bundle at the end
-of future BERT refits.
+of every BERT refit.
 
 ## Artifact contract
 
@@ -135,10 +136,3 @@ The API reads the exported bundle through `SENTIMENT_MODEL_PATH`, defaulting to
 `models/yelp-sentiment/artifacts/bert/model.pt`, and the tokenizer through
 `SENTIMENT_TOKENIZER_PATH`, defaulting to
 `models/yelp-sentiment/artifacts/bert/tokenizer`.
-
-## Status
-
-Data fetching, validation, data dictionary, EDA, data cleaning, feature
-engineering, fine-tuning, evaluation, reports, deployment export, and API
-integration are implemented. The reports are `notebooks/01_eda.py` through
-`notebooks/05_evaluate.py`.

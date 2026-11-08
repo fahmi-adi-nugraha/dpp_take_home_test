@@ -2,17 +2,24 @@
 
 ## Overview
 
-Local-only FastAPI inference service for the take-home models. Both the
-delivery-time and Yelp sentiment endpoints are implemented.
+Local-only FastAPI inference service for the delivery-time and Yelp sentiment
+models. The service exposes health checks, model readiness, and prediction
+endpoints for both projects.
 
 The service has no database, authentication, or external service dependencies.
+
+## Model results
+
+- Delivery time: held-out test RMSE **4.01**, MAE **3.16**, R² **0.82**.
+- Yelp sentiment: BERT test accuracy **0.68**, macro F1 **0.67**; the TF-IDF
+  logistic baseline scores **0.58** accuracy and **0.58** macro F1.
 
 ## Endpoints
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Service and model readiness |
-| `GET` | `/models` | Loaded model names and status |
+| `GET` | `/models` | Loaded model names and readiness |
 | `POST` | `/predict/delivery-time` | Delivery-time regression |
 | `POST` | `/predict/sentiment` | Five-class Yelp review sentiment classification |
 
@@ -113,7 +120,7 @@ curl -X POST http://127.0.0.1:8000/predict/sentiment \
 }
 ```
 
-## Health and model status
+## Health and model readiness
 
 `GET /health` returns `200` with `status: "ok"` when both models are loaded, or
 `status: "degraded"` when either artifact is unavailable. Each model's readiness
@@ -126,7 +133,7 @@ is reported separately.
 - Invalid request fields return FastAPI's normal `422`.
 - A missing delivery-time artifact returns `503` from the delivery endpoint.
 - A missing sentiment artifact returns `503` from the sentiment endpoint.
-- The application still starts if a model artifact is missing.
+- A missing artifact does not prevent application startup.
 
 ## Configuration
 
@@ -154,15 +161,13 @@ uv run --env-file .env uvicorn inference_api.main:app --reload
 - Missing artifacts do not crash the process; readiness is exposed through
   `/health` and `/models`.
 
-## Monitoring and retraining plan
+## Monitoring and retraining
 
 - Log request count, latency, status codes, and prediction distributions.
 - Monitor input drift against the training distribution.
 - Retrain when offline metrics degrade, drift exceeds an agreed threshold, new
   labeled data arrives, or business conditions change.
 - Version artifacts by Git commit or date and keep a short model card.
-
-This is a plan only; request-level monitoring is not implemented yet.
 
 ## Limitations
 

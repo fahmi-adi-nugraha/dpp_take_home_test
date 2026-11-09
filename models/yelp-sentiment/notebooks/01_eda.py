@@ -33,7 +33,7 @@ def _(mo):
     | `label` | Star rating class: 0 = 1 star, 4 = 5 stars. | **Target** |
     | `text` | Raw review text, including literal escape sequences. | Feature |
 
-    The raw labels are kept as five classes throughout EDA. Any collapse to binary sentiment is a modelling decision for the next step.
+    The raw labels are kept as five classes throughout EDA. Any collapse to binary sentiment is a modeling decision for the next step.
     """)
     return
 
@@ -189,6 +189,8 @@ def _(all_reviews, pl, test, train):
                 "null labels",
                 "null texts",
                 "empty/whitespace texts",
+                "actual newline characters",
+                "rows with non-ASCII characters",
                 "exact duplicate rows",
                 "duplicate review texts",
                 "train/test exact-text overlap",
@@ -201,6 +203,8 @@ def _(all_reviews, pl, test, train):
                 f"{train['label'].null_count() + test['label'].null_count():,}",
                 f"{train['text'].null_count() + test['text'].null_count():,}",
                 f"{int((all_reviews['text'].str.strip_chars() == '').sum()):,}",
+                f"{int(all_reviews['text'].str.contains(chr(10), literal=True).sum()):,}",
+                f"{int((all_reviews['text'].str.len_bytes() != all_reviews['text'].str.len_chars()).sum()):,}",
                 f"{all_reviews.height - all_reviews.unique().height:,}",
                 f"{all_reviews.height - all_reviews['text'].n_unique():,}",
                 f"{_overlap:,}",
@@ -318,7 +322,7 @@ def _(pl, sample_tbl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Exactly 55.58% of all reviews contain at least one literal backslash, and 50.11% contain the two-character sequence `\n`. The raw strings are valid JSON string contents: every train and test row can be decoded cleanly. Unescaping should therefore happen before tokenization. The decoded text is slightly shorter, and the decoded version should be the model input.
+    Exactly 55.58% of all reviews contain at least one literal backslash, and 50.11% contain the two-character sequence `\n`. The raw strings are valid JSON string contents: every train and test row can be decoded cleanly. There are no actual newline characters and no non-ASCII characters in the raw text; non-ASCII content is represented with escape sequences. Unescaping should therefore happen before tokenization. The decoded text is slightly shorter, and the decoded version should be the model input.
     """)
     return
 
@@ -405,6 +409,8 @@ def _(all_reviews, pl):
                 "more than 1,000 words",
                 "contains http",
                 "contains www.",
+                "contains &amp;",
+                "contains <br>",
             ],
             "rows": [
                 int((_chars < 20).sum()),
@@ -421,6 +427,16 @@ def _(all_reviews, pl):
                         pl.col("text").str.contains("www.", literal=True).sum()
                     ).item()
                 ),
+                int(
+                    all_reviews.select(
+                        pl.col("text").str.contains("&amp;", literal=True).sum()
+                    ).item()
+                ),
+                int(
+                    all_reviews.select(
+                        pl.col("text").str.contains("<br>", literal=True).sum()
+                    ).item()
+                ),
             ],
         }
     ).with_columns((pl.col("rows") / all_reviews.height * 100).round(2).alias("share_pct"))
@@ -431,7 +447,7 @@ def _(all_reviews, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Review length is heavily right-skewed: the median is 539 characters, but the 99th percentile is 3,292 and the maximum is 5,637. Very short reviews exist too: 0.23% are under 20 characters and 0.45% are under five words. We'll keep them in the first baseline, then test whether filtering helps. Long reviews will require tokenizer truncation, which we analyse in the next section.
+    Review length is heavily right-skewed: the median is 539 characters, but the 99th percentile is 3,292 and the maximum is 5,637. Very short reviews exist too: 0.23% are under 20 characters and 0.45% are under five words. Only 17 reviews contain `&amp;`, and no reviews contain `<br>` tags. We'll keep short reviews in the first baseline, then test whether filtering helps. Long reviews will require tokenizer truncation, which we analyze in the next section.
     """)
     return
 
@@ -811,7 +827,7 @@ def _(LABEL_ORDER, THEME, confusion_tbl, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The extreme classes are easiest: 1-star and 5-star reviews are usually recognised correctly. Most errors sit between neighbouring classes, which is exactly the pattern expected from a five-class star rating. This supports keeping a five-class baseline first, while treating a binary negative-versus-positive formulation as a separate decision.
+    The extreme classes are easiest: 1-star and 5-star reviews are usually recognized correctly. Most errors sit between neighboring classes, which is exactly the pattern expected from a five-class star rating. This supports keeping a five-class baseline first, while treating a binary negative-versus-positive formulation as a separate decision.
     """)
     return
 

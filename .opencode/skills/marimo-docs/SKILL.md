@@ -98,6 +98,8 @@ Use this order unless there is a strong reason to differ:
 
 Write the report in the **first-person plural**, as a group: use “we”, “we'll”, and “our” rather than “I”, “I'll”, and “my”. For example, write “We'll start with the schema” rather than “I start with the schema”.
 
+Use **American English** spelling and terminology throughout. For example, write “analyze”, “behavior”, “color”, “center”, “modeling”, “normalize”, “summarize”, “license”, and “neighboring” rather than “analyse”, “behaviour”, “colour”, “centre”, “modelling”, “normalise”, “summarise”, “licence”, and “neighbouring”.
+
 Keep prose brief and decision-oriented. Observations should explain:
 
 - what is visible in the data,

@@ -382,7 +382,7 @@ def _(raw):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The raw columns are all strings, and `"NaN"` is stored as literal text rather than a null. The target is integer-valued from 10 to 54 minutes, and the order-time columns already show mixed representations. The coordinate columns also contain exact zero values, which will need a validity check before distance is computed.
+    The raw columns are all strings, and `"NaN"` is stored as literal text rather than a null. The snapshot contains 45,584 rows and 20 columns, with 45,584 unique delivery IDs and 1,320 unique couriers; order dates span 2022-02-11 through 2022-04-06 across 44 unique dates. The target is integer-valued from 10 to 54 minutes, and the order-time columns already show mixed representations. The coordinate columns also contain exact zero values, which will need a validity check before distance is computed.
     """)
     return
 
@@ -450,7 +450,7 @@ def _(THEME, missing_tbl, p9, pl, save_plot):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    Ratings, age, and order time each have roughly 3.80–4.20% missing values; city has 2.60%, multiple deliveries 2.20%, weather and traffic about 1.30%, and festival 0.50%. These are literal `"NaN"` strings, so the cleaning step should parse them as nulls and add missingness indicators where the missing pattern is informative.
+    Ratings, age, and order time each have roughly 3.80–4.20% missing values; city has 2.60%, multiple deliveries 2.20%, weather and traffic about 1.30%, and festival 0.50%. Across the 20 columns, 9,131 cells are missing. These are literal `"NaN"` strings, so the cleaning step should parse them as nulls and add missingness indicators where the missing pattern is informative.
     """)
     return
 
@@ -692,7 +692,7 @@ def _(THEME, p9, save_plot, time_long):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    The time columns are not consistently parsed: they mix `HH:MM`, fractional-day values, `1` meaning 24:00, and `24:xx:00` values. Other issues include the `Metropolitian` spelling, ratings up to 6.00, 38 courier ages below 18, 3,640 invalid coordinate pairs, and 431 sign-flipped restaurant coordinates. The cleaning plan should normalize the time strings and city spelling, flag or clip out-of-range values, and repair or flag coordinates before computing distance.
+    The time columns are not consistently parsed: they mix `HH:MM`, fractional-day values, `1` meaning 24:00, and `24:xx:00` values. Other issues include the `Metropolitian` spelling, ratings up to 6.00, 38 courier ages below 18, 3,640 invalid coordinate pairs, and 431 sign-flipped restaurant coordinates. All 53 ratings above 5.00 are exactly 6.00, and 162 of the 431 sign-flipped rows also have a negative restaurant longitude while the delivery longitude is positive. The cleaning plan should normalize the time strings and city spelling, flag or clip out-of-range values, and repair or flag coordinates before computing distance.
     """)
     return
 

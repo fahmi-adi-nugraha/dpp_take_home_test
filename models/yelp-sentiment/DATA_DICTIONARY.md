@@ -218,34 +218,3 @@ filtering or separate handling improves validation performance.
 URL handling is a preprocessing decision. A BERT tokenizer can process URLs, but
 normalizing or removing them may reduce noise. Test this as a preprocessing
 ablation rather than assuming one choice is better.
-
-## Preprocessing implications
-
-- Decode literal escape sequences before tokenization, including `\n`, `\"`,
-  `\uXXXX`, `\\`, `\r`, and `\t`. Validate malformed rows.
-- Recompute text-length and token-length statistics after unescaping.
-- Keep case and punctuation for a BERT-family model unless an ablation shows a
-  benefit from normalization. Aggressive lowercasing and punctuation removal can
-  remove sentiment cues such as negation and emphasis.
-- Measure token lengths with the actual tokenizer before choosing
-  `max_length`. Consider head-only truncation versus head + tail truncation.
-- Use the supplied train/test split. Carve a class-stratified validation split
-  from train for tuning; do not tune on the test set.
-- Use accuracy, macro F1, and per-class precision/recall. Class balance makes
-  accuracy less misleading than usual, but macro F1 still catches uneven
-  performance.
-- Decide the sentiment label mapping during EDA, not during fetching. The raw
-  data should remain five-class star ratings.
-- Check normalized near-duplicates if validation scores look unusually high.
-- Treat review length as a potential shortcut. Evaluate whether a length-only
-  baseline predicts the label surprisingly well.
-
-## Open questions for EDA
-
-1. Should the task stay five-class or collapse to binary sentiment?
-2. If binary, what should happen to the 3-star class?
-3. What token length covers 95–99% of reviews after unescaping?
-4. Does decoding escape sequences materially change token counts or model input?
-5. Do URLs, very short reviews, or near-duplicates affect class-specific errors?
-6. Does review length correlate strongly enough with sentiment to act as a
-   shortcut?

@@ -8,11 +8,21 @@ endpoints for both projects.
 
 The service has no database, authentication, or external service dependencies.
 
+## Prerequisites
+
+- `uv` 0.13 or newer
+- Python 3.12, managed by `uv` from `.python-version`
+- Downloaded model artifacts from the `models-v1.0.0` release
+
 ## Model results
 
 - Delivery time: held-out test RMSE **4.01**, MAE **3.16**, R² **0.82**.
 - Yelp sentiment: BERT test accuracy **0.68**, macro F1 **0.67**; the TF-IDF
   logistic baseline scores **0.58** accuracy and **0.58** macro F1.
+
+Detailed training configuration and artifact contracts are in the
+[delivery-time README](../../models/delivery-time/README.md) and
+[Yelp sentiment README](../../models/yelp-sentiment/README.md).
 
 ## Endpoints
 
@@ -23,18 +33,26 @@ The service has no database, authentication, or external service dependencies.
 | `POST` | `/predict/delivery-time` | Delivery-time regression |
 | `POST` | `/predict/sentiment` | Five-class Yelp review sentiment classification |
 
-## Run locally
+## Model artifacts
 
-Download the prebuilt model artifacts from the
-[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
-Verify the archive with the published SHA-256 file, then extract it from the
-repository root:
+Download and verify the prebuilt model artifacts from the
+[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0):
+
+```bash
+curl -L -o /tmp/dpp-inference-models-v1.zip \
+  https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/download/models-v1.0.0/dpp-inference-models-v1.zip
+curl -L -o /tmp/dpp-inference-models-v1.zip.sha256 \
+  https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/download/models-v1.0.0/dpp-inference-models-v1.zip.sha256
+(cd /tmp && sha256sum -c dpp-inference-models-v1.zip.sha256)
+```
+
+Extract the archive from the repository root so the API can find both models:
 
 ```bash
 unzip -o /tmp/dpp-inference-models-v1.zip -d .
 ```
 
-Install the workspace and start the service:
+## Run locally
 
 ```bash
 uv sync --all-packages
@@ -42,6 +60,12 @@ uv run uvicorn inference_api.main:app --reload
 ```
 
 Interactive documentation is available at `http://127.0.0.1:8000/docs`.
+
+Run the API tests:
+
+```bash
+uv run pytest apps/api/tests
+```
 
 ## Delivery-time request
 

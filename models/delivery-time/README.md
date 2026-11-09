@@ -39,19 +39,6 @@ data/raw/zomato/
 The manifest records the source URL, download timestamp, archive size and
 SHA-256, CSV row count and columns, and target column.
 
-## Workflow
-
-1. Fetch the dataset with `httpx` and store it under `data/raw/zomato/`.
-2. Explore the data in `notebooks/01_eda.py` using Polars and plotnine.
-3. Clean and standardize the data in `notebooks/02_data_cleaning.py` using the
-   functions in `src/delivery_time/data.py`.
-4. Build the semantic feature frame in
-   `notebooks/03_feature_engineering.py` using `src/delivery_time/features.py`.
-5. Train an XGBoost model wrapped in a scikit-learn `Pipeline` in
-   `notebooks/04_model_training.py` and `train.py`.
-6. Evaluate the model in `evaluate.py` and the training notebook.
-7. Export the trained pipeline and metadata under `artifacts/` for the API.
-
 ## Processed outputs
 
 ```text
@@ -67,6 +54,19 @@ data/processed/
 Parquet is the canonical typed artifact. CSV copies are provided for
 inspection. Processed data and manifests are generated locally and are ignored
 by Git.
+
+## Workflow
+
+1. Fetch the dataset with `httpx` and store it under `data/raw/zomato/`.
+2. Explore the data in `notebooks/01_eda.py` using Polars and plotnine.
+3. Clean and standardize the data in `notebooks/02_data_cleaning.py` using the
+   functions in `src/delivery_time/data.py`.
+4. Build the semantic feature frame in
+   `notebooks/03_feature_engineering.py` using `src/delivery_time/features.py`.
+5. Train an XGBoost model wrapped in a scikit-learn `Pipeline` in
+   `notebooks/04_model_training.py` and `train.py`.
+6. Evaluate the model in `evaluate.py` and the training notebook.
+7. Export the trained pipeline and metadata under `artifacts/` for the API.
 
 ## Layout
 
@@ -105,7 +105,7 @@ uv run pytest models/delivery-time/tests
 
 The training command runs an 80/10/10 random split, a Ridge linear baseline, a feature ablation over the baseline feature set, and randomized hyperparameter tuning for XGBoost. Ridge alpha and XGBoost were tuned with five-fold `RandomizedSearchCV` (20 and 30 draws, seed 42, negative RMSE). The selected feature set includes grouped weather (`weather_group`) based on validation RMSE. The final XGBoost model was refit on train + validation and evaluated once on test.
 
-### Final metrics and best hyperparameters
+### Final test results and best hyperparameters
 
 | Stage | RMSE | MAE | R² |
 |---|---:|---:|---:|
@@ -129,6 +129,15 @@ The final model uses the following values. They are saved in `artifacts/metrics.
 | `reg_lambda` | 0.00255 | L2 regularization on leaf weights. | A small L2 penalty stabilized the fit by shrinking leaf weights. |
 | `gamma` | 0.00205 | Minimum loss reduction required for a split. | A near-zero threshold allowed modest-gain splits while the other penalties controlled complexity. |
 
+## Deployment artifacts
+
+The training pipeline exports the full preprocessing and tuned model as a
+single scikit-learn pipeline:
+
+```text
+artifacts/model.joblib
+```
+
 Artifacts:
 
 - `artifacts/model.joblib`: full preprocessing + tuned XGBoost pipeline.
@@ -140,8 +149,9 @@ Artifacts:
 - `artifacts/permutation_importance.csv`: test-set permutation importance.
 - `artifacts/model_card.md`: concise model summary.
 
-The API reads the model through `DELIVERY_MODEL_PATH`, defaulting to
-`models/delivery-time/artifacts/model.joblib`.
+Prebuilt model artifacts are available from the
+[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
+Extract the archive from the repository root before starting the API.
 
 ## API integration
 
@@ -152,6 +162,5 @@ returns the predicted minutes plus any input-quality warnings. See
 [`../../apps/api/README.md`](../../apps/api/README.md) for the request contract
 and run command.
 
-Prebuilt model artifacts are available from the
-[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
-Extract the archive from the repository root before starting the API.
+The API reads the model through `DELIVERY_MODEL_PATH`, defaulting to
+`models/delivery-time/artifacts/model.joblib`.

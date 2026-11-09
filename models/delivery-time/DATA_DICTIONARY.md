@@ -203,19 +203,3 @@ an order-time ETA model.
 round values such as 15, 25, and 35, which is worth examining in EDA. The exact
 start point of the target—order placement or pickup—should be confirmed before
 final feature selection.
-
-## Feature-engineering implications
-
-- Compute distance only from validated coordinate pairs.
-- Derive order-hour, day-of-week, weekend, rush-hour, and meal-period features
-  from `Order_Date` and `Time_Orderd`.
-- Exclude `Time_Order_picked` and pickup delay from an order-time model.
-- Treat `Road_traffic_density` and `Vehicle_condition` as ordinal.
-- Treat `Weather_conditions`, `Type_of_order`, `Type_of_vehicle`, and `City` as
-  categorical.
-- Treat `multiple_deliveries` as a count and add a missing indicator.
-- Use courier-level aggregates only with leakage-safe cross-validation.
-- Normalize the `Metropolitian` spelling and the `Time_Orderd` column name in
-  downstream code.
-- Add missing-value indicators for age, ratings, order time, weather, traffic,
-  multiple deliveries, festival, and city.

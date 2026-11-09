@@ -12,6 +12,7 @@ baseline.
 - **Alternative source:** <https://www.kaggle.com/datasets/yelp-dataset/yelp-dataset/data>
 - **Raw data location:** `data/raw/yelp_review_full/`
 - **Fetch command:** `uv run fetch-sentiment-data`
+- **Data dictionary:** [DATA_DICTIONARY.md](DATA_DICTIONARY.md)
 - **Credentials:** not required for the public dataset; set `HF_TOKEN` when
   rate limits or access restrictions require it.
 
@@ -25,14 +26,50 @@ checksums, schema, row counts, and labels.
 | test | 50,000 | 5 balanced classes |
 
 The raw labels are `0–4`, corresponding to 1–5 stars. We keep the five-class
-target. A `fetch-manifest.json` records file sizes, SHA-256 hashes, row counts,
-label counts, and the dataset revision.
+target.
 
 ## Target and metrics
 
 - **Target:** five-class review sentiment derived from star ratings.
 - **Metrics:** accuracy, macro F1, weighted F1, and per-class precision/recall.
 - **Primary metric:** macro F1 because each star rating is weighted equally.
+
+## Fetched output
+
+The fetch command stores the two parquet files and a metadata manifest:
+
+```text
+data/raw/yelp_review_full/
+├── train-00000-of-00001.parquet
+├── test-00000-of-00001.parquet
+└── fetch-manifest.json
+```
+
+The manifest records file sizes, SHA-256 hashes, row counts, label counts, and
+the dataset revision.
+
+## Processed outputs
+
+```text
+data/processed/
+├── yelp_clean.parquet
+├── yelp_clean_manifest.json
+├── yelp_features.parquet
+├── yelp_features_manifest.json
+├── yelp_features_model.parquet
+└── yelp_features_model_manifest.json
+```
+
+Parquet is the canonical typed artifact. The cleaned dataset stores decoded
+review text, labels, review IDs, and split assignments. The reduced feature
+frame keeps the same text-level data for the 200,000-row train split,
+20,000-row validation split, and full 50,000-row test split.
+
+Unlike the delivery-time project, there is no persisted numeric or tokenized
+feature matrix. BERT tokenization happens during training and inference, and
+the TF-IDF vectorizer is learned inside the saved logistic pipeline. The
+processed data artifacts and manifests are generated locally and are ignored
+by Git.
 
 ## Workflow
 
@@ -157,7 +194,7 @@ We use a reduced stratified hold-out split: **200,000** training rows,
 refit on the reduced train + validation frame; the test split is untouched
 until evaluation.
 
-### Final test results
+### Final test results and selected hyperparameters
 
 | Model | Accuracy | Macro F1 | Weighted F1 |
 |---|---:|---:|---:|
@@ -167,13 +204,41 @@ until evaluation.
 BERT is the stronger model, especially on the 1-star and 5-star classes. The
 middle classes remain the hardest.
 
-The selected BERT configuration uses `learning_rate=4.6878e-05`,
-`per_device_train_batch_size=16`, `gradient_accumulation_steps=1`,
-`weight_decay=0.1`, `warmup_ratio=0.06`, a linear scheduler, label smoothing
-`0.1`, dropout `0.2/0.1`, `max_length=256`, and 3 epochs. Exact parameter sets
-and trial histories are stored in the artifact directories.
+The logistic search covered `tfidf_max_features` 10,000–100,000,
+`tfidf_ngram_range` unigram and unigram+bigram, `tfidf_min_df` 2–10,
+`tfidf_max_df` 0.50–0.90, sublinear term frequency on/off, `clf_C` 0.001–100,
+and intercept on/off. The BERT search covered `learning_rate` 1e-5–5e-5,
+batch size 8 or 16, gradient accumulation 1, 2, or 4, weight decay 0, 0.01, or
+0.10, warmup ratio 0, 0.06, or 0.10, linear or cosine schedules, label
+smoothing 0, 0.05, or 0.10, and hidden/attention dropout 0.10 or 0.20. The
+sequence length was fixed at 256 and ASHA selected the number of epochs from
+1–3.
 
-## Deployment export
+The final models use the following values. Exact parameter sets and trial
+histories are stored in the artifact directories.
+
+| Model | Parameter | Value | Controls | Why we selected it |
+|---|---|---:|---|---|
+| Logistic | `tfidf_max_features` | 10,000 | Maximum TF-IDF vocabulary size. | A compact vocabulary reduced vectorizer size and overfitting while retaining enough signal. |
+| Logistic | `tfidf_ngram_range` | `unigram_bigram` | Word n-grams included in the TF-IDF features. | Bigrams captured negation and short phrases that unigrams missed. |
+| Logistic | `tfidf_min_df` | 10 | Minimum document frequency for a term. | Removing rare terms reduced noise and model size. |
+| Logistic | `tfidf_max_df` | 0.75 | Maximum document frequency for a term. | Dropping overly common terms reduced uninformative tokens. |
+| Logistic | `tfidf_sublinear_tf` | `true` | Sublinear term-frequency scaling. | Dampened the effect of repeated words and improved validation macro F1. |
+| Logistic | `clf_C` | 0.2982 | Inverse regularization strength. | Moderate regularization generalized better than weaker or stronger penalties. |
+| Logistic | `clf_fit_intercept` | `false` | Whether to fit an intercept. | Validation macro F1 was better without an extra intercept. |
+| BERT | `learning_rate` | 4.6878e-05 | Shrinkage applied to each optimizer step. | A low learning rate with three epochs gave the best validation macro F1. |
+| BERT | `per_device_train_batch_size` | 16 | Training examples per device batch. | Batch 16 fit A100 memory and produced stable gradients. |
+| BERT | `gradient_accumulation_steps` | 1 | Number of batches accumulated per optimizer step. | The selected batch size did not need extra accumulation. |
+| BERT | `weight_decay` | 0.1 | AdamW weight regularization. | Regularization reduced overfitting during fine-tuning. |
+| BERT | `warmup_ratio` | 0.06 | Fraction of steps used for learning-rate warmup. | A short warmup stabilized early training. |
+| BERT | `lr_scheduler_type` | `linear` | Learning-rate decay schedule. | The linear schedule outperformed cosine for this run. |
+| BERT | `label_smoothing_factor` | 0.1 | Softens the one-hot training targets. | Smoothing helped with noisy and ambiguous adjacent-star reviews. |
+| BERT | `hidden_dropout_prob` | 0.2 | Dropout on hidden representations. | Stronger hidden dropout regularized the classifier. |
+| BERT | `attention_probs_dropout_prob` | 0.1 | Dropout on attention probabilities. | Mild attention dropout regularized without disrupting learning. |
+| BERT | `max_length` | 256 | Maximum tokens per review. | A 256-token budget balanced coverage, memory, and training speed. |
+| BERT | `num_train_epochs` | 3 | Number of fine-tuning epochs. | The third epoch gave the best validation macro F1 and ASHA selected it. |
+
+## Deployment artifacts
 
 The training pipeline keeps the Hugging Face checkpoint and exports a
 deployment-friendly state-dict bundle:
@@ -190,26 +255,7 @@ verifies that the reloaded bundle reproduces the source model probabilities
 before it succeeds. `train-sentiment-model` also exports the bundle at the end
 of every BERT refit.
 
-Prebuilt artifacts, including both project models and evaluation outputs, are
-available from the
-[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
-Download `dpp-inference-models-v1.zip`, verify it with the published SHA-256
-file, and extract it from the repository root.
-
-## Inference device
-
-`SentimentPredictor` resolves the inference device from `auto`, `cpu`, or
-`cuda`:
-
-- `auto` uses CUDA when a usable CUDA-enabled PyTorch runtime and GPU are
-  available, otherwise CPU.
-- `cpu` forces CPU.
-- `cuda` requires a usable CUDA device and raises a clear error instead of
-  silently falling back.
-
-The REST API exposes this through `SENTIMENT_DEVICE`, defaulting to `auto`.
-
-## Artifact contract
+Artifacts:
 
 - `artifacts/logistic/`: TF-IDF logistic best parameters, fitted pipeline,
   tuning trials, and validation metrics.
@@ -222,7 +268,34 @@ The REST API exposes this through `SENTIMENT_DEVICE`, defaulting to `auto`.
 - `artifacts/evaluation/`: final test metrics, per-class metrics, confusion
   matrices, hyperparameter table, test predictions, and comparison report.
 
+Prebuilt artifacts, including both project models and evaluation outputs, are
+available from the
+[`models-v1.0.0` release](https://github.com/fahmi-adi-nugraha/dpp_take_home_test/releases/tag/models-v1.0.0).
+Download `dpp-inference-models-v1.zip`, verify it with the published SHA-256
+file, and extract it from the repository root.
+
+## API integration
+
+The Yelp model is served by `POST /predict/sentiment` in the local FastAPI app.
+The endpoint accepts raw review text, tokenizes it with the exported tokenizer,
+runs BERT inference, and returns the predicted label, confidence, and
+five-class probabilities. See [`../../apps/api/README.md`](../../apps/api/README.md)
+for the request contract and run command.
+
 The API reads the exported bundle through `SENTIMENT_MODEL_PATH`, defaulting to
 `models/yelp-sentiment/artifacts/bert/model.pt`, and the tokenizer through
 `SENTIMENT_TOKENIZER_PATH`, defaulting to
 `models/yelp-sentiment/artifacts/bert/tokenizer`.
+
+### Inference device
+
+`SentimentPredictor` resolves the inference device from `auto`, `cpu`, or
+`cuda`:
+
+- `auto` uses CUDA when a usable CUDA-enabled PyTorch runtime and GPU are
+  available, otherwise CPU.
+- `cpu` forces CPU.
+- `cuda` requires a usable CUDA device and raises a clear error instead of
+  silently falling back.
+
+The REST API exposes this through `SENTIMENT_DEVICE`, defaulting to `auto`.

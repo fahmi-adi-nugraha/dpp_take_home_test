@@ -31,6 +31,10 @@ full 50,000-review test split.
 | BERT | 0.68 | 0.67 | 0.67 |
 | TF-IDF logistic regression | 0.58 | 0.58 | 0.58 |
 
+Detailed hyperparameters and artifact contracts are in the
+[delivery-time README](models/delivery-time/README.md) and
+[Yelp sentiment README](models/yelp-sentiment/README.md).
+
 ## Repository layout
 
 ```text
@@ -72,6 +76,7 @@ Install the workspace and verify the packages import:
 ```bash
 uv sync --all-packages
 uv run python -c "import delivery_time, yelp_sentiment, inference_api"
+uv run pytest
 ```
 
 Copy the environment template when authenticated Kaggle requests or Hugging
@@ -97,8 +102,9 @@ uv run fetch-sentiment-data
 uv run --env-file .env fetch-sentiment-data
 ```
 
-The field-level Zomato dataset dictionary is at
-[`models/delivery-time/DATA_DICTIONARY.md`](models/delivery-time/DATA_DICTIONARY.md).
+Field-level data dictionaries are at
+[`models/delivery-time/DATA_DICTIONARY.md`](models/delivery-time/DATA_DICTIONARY.md)
+and [`models/yelp-sentiment/DATA_DICTIONARY.md`](models/yelp-sentiment/DATA_DICTIONARY.md).
 
 ## Model artifacts
 
@@ -171,6 +177,10 @@ documentation at `http://127.0.0.1:8000/docs`.
 | `GET` | `/models` | Per-model readiness details |
 | `POST` | `/predict/delivery-time` | Delivery-time regression |
 | `POST` | `/predict/sentiment` | Five-class sentiment classification |
+
+`/health` reports `ok` when both models are loaded and `degraded` when either
+artifact is unavailable. The sentiment model uses `SENTIMENT_DEVICE` to choose
+`auto`, `cpu`, or `cuda`.
 
 Example delivery-time request:
 

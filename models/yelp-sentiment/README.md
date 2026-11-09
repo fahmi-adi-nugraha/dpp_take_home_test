@@ -34,6 +34,24 @@ target.
 - **Metrics:** accuracy, macro F1, weighted F1, and per-class precision/recall.
 - **Primary metric:** macro F1 because each star rating is weighted equally.
 
+## Input variables
+
+The API accepts one review per request.
+
+| Input | Format | Valid range | Notes |
+|---|---|---|---|
+| `text` | UTF-8 string | 1–10,000 characters | Empty strings are rejected; text is tokenized and truncated to 256 tokens |
+
+The tokenizer converts each review into:
+
+| Model input | Format | Range | Notes |
+|---|---|---|---|
+| `input_ids` | integer tensor | 1–256 tokens | Includes `[CLS]` and `[SEP]`; longer reviews are truncated |
+| `attention_mask` | 0/1 tensor | Same length as `input_ids` | Marks real tokens versus padding |
+
+The model returns five-class probabilities for labels `0–4`, corresponding to
+1–5 stars.
+
 ## Fetched output
 
 The fetch command stores the two parquet files and a metadata manifest:

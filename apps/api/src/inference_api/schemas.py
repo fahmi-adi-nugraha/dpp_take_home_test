@@ -54,8 +54,8 @@ class DeliveryTimeRequest(BaseModel):
     )
     order_time: str | None = Field(
         default=None,
-        pattern=r"^\d{1,2}:\d{2}$",
-        description="Order placement time in HH:MM format.",
+        pattern=r"^(?:[01]?\d|2[0-4]):[0-5]\d$",
+        description="Order placement time in 24-hour HH:MM format.",
         examples=["12:30"],
     )
     weather: WeatherCategory | None = Field(

@@ -24,6 +24,51 @@ target column is `Time_taken (min)`.
 - **Target:** product delivery time.
 - **Metrics:** RMSE, MAE, and R².
 
+## Input variables
+
+The API accepts raw order, location, and courier inputs. All fields are
+optional; missing values are handled by the model's null and missingness
+features.
+
+| Input | Format | Valid range | Notes |
+|---|---|---|---|
+| `restaurant.latitude` | float | -90 to 90 | Missing or paired-invalid values set `coordinates_invalid` |
+| `restaurant.longitude` | float | -180 to 180 | Missing or paired-invalid values set `coordinates_invalid` |
+| `delivery.latitude` | float | -90 to 90 | Missing or paired-invalid values set `coordinates_invalid` |
+| `delivery.longitude` | float | -180 to 180 | Missing or paired-invalid values set `coordinates_invalid` |
+| `order_time` | 24-hour `HH:MM` string or null | `00:00`–`24:59` | `24:xx` values wrap to hour 0; missing values set `time_order_missing` |
+| `weather` | string or null | `Cloudy`, `Fog`, `Sandstorms`, `Stormy`, `Sunny`, `Windy` | Grouped into `weather_group` |
+| `traffic` | string or null | `Low`, `Medium`, `High`, `Jam` | Encoded as `traffic_ordinal` 0–3 |
+| `city` | string or null | `Metropolitan`, `Semi-Urban`, `Urban` | `Metropolitian` is normalized to `Metropolitan` |
+| `festival` | string or null | `Yes`, `No` | Encoded as `festival_binary` |
+| `multiple_deliveries` | integer or null | 0–10 | API range; training data contains 0–3 |
+| `vehicle_condition` | integer or null | 0–3 | Vehicle condition score |
+| `courier_age` | number or null | 0–100 | Years |
+| `courier_rating` | number or null | 0–10 | Training data includes ratings above 5.0; API range is 0–10 |
+
+The API request is transformed into these 18 model features:
+
+| Model feature | Format | Range | Source |
+|---|---|---|---|
+| `distance_km` | float or null | ≥ 0 | Haversine distance from valid or repaired coordinates |
+| `coordinates_invalid` | boolean | `true`/`false` | Coordinate validation |
+| `traffic_ordinal` | integer or null | 0–3 | `traffic` |
+| `weather` | string or null | Weather categories | `weather` |
+| `city` | string or null | City categories | `city` |
+| `festival_binary` | integer or null | 0–1 | `festival` |
+| `multiple_deliveries` | integer or null | 0–10 | `multiple_deliveries` |
+| `has_multiple_deliveries` | boolean or null | `true`/`false` | `multiple_deliveries > 0` |
+| `vehicle_condition` | integer or null | 0–3 | `vehicle_condition` |
+| `age` | float or null | 0–100 | `courier_age` |
+| `rating` | float or null | 0–10 | `courier_rating` |
+| `order_hour` | integer or null | 0–23 | Derived from `order_time`; `24:xx` wraps to 0 |
+| `is_rush_hour` | boolean or null | `true`/`false` | `order_hour` in 11–13 or 17–20 |
+| `is_meal_period` | boolean or null | `true`/`false` | `order_hour` in 07–21 |
+| `time_order_missing` | boolean | `true`/`false` | `order_time` missing |
+| `city_missing` | boolean | `true`/`false` | `city` missing |
+| `multiple_missing` | boolean | `true`/`false` | `multiple_deliveries` missing |
+| `weather_group` | string or null | `clear`, `cloudy_fog`, `storm_wind` | Derived from `weather` |
+
 ## Fetched output
 
 The fetch command stores the archive, extracted CSV, and metadata manifest

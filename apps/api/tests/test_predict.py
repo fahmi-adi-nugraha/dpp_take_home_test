@@ -46,6 +46,13 @@ def test_predict_rejects_invalid_coordinates(loaded_client: TestClient) -> None:
     assert response.status_code == 422
 
 
+def test_predict_rejects_invalid_order_time(loaded_client: TestClient) -> None:
+    payload = {**DELIVERY_PAYLOAD, "order_time": "25:00"}
+    response = loaded_client.post("/predict/delivery-time", json=payload)
+
+    assert response.status_code == 422
+
+
 def test_predict_returns_503_when_delivery_model_is_unavailable(
     unloaded_client: TestClient,
 ) -> None:

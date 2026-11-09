@@ -72,6 +72,10 @@ uv run pytest apps/api/tests
 The endpoint accepts raw order, location, and courier inputs. The API constructs
 the 18 engineered features expected by the saved XGBoost pipeline.
 
+The canonical input table, including formats, valid ranges, and derived model
+features, is in the
+[delivery-time README](../../models/delivery-time/README.md#input-variables).
+
 | Field | Type | Notes |
 |---|---|---|
 | `restaurant` | object or null | `latitude` and `longitude`; missing or invalid values produce a warning |
@@ -84,7 +88,7 @@ the 18 engineered features expected by the saved XGBoost pipeline.
 | `multiple_deliveries` | integer or null | Number of deliveries in the same trip |
 | `vehicle_condition` | integer or null | Vehicle condition score, 0–3 |
 | `courier_age` | number or null | Courier age in years |
-| `courier_rating` | number or null | Courier rating; out-of-range values are passed through to the model |
+| `courier_rating` | number or null | Courier rating; API range is 0–10 |
 
 Pickup time, prep time, the target, vehicle type, and order type are not accepted
 because they are either leakage fields or excluded from the selected feature set.
@@ -129,6 +133,9 @@ If coordinates or order time are missing, the prediction still returns, and the
 
 The sentiment endpoint accepts one review and returns the five-class
 distribution. Text is truncated to the model maximum length of 256 tokens.
+
+The canonical input table is in the
+[Yelp sentiment README](../../models/yelp-sentiment/README.md#input-variables).
 
 ```bash
 curl -X POST http://127.0.0.1:8000/predict/sentiment \

@@ -133,6 +133,11 @@ unzip -o /tmp/dpp-inference-models-v1.zip -d .
 The archive contains both the delivery-time pipeline and the Yelp sentiment
 bundle, plus their metadata, evaluation outputs, and checksums.
 
+For extracting the artifacts outside the repository or overriding the default
+paths, see
+[Custom artifact locations](apps/api/README.md#custom-artifact-locations) in the
+API README.
+
 ## Model commands
 
 ### Delivery time
@@ -161,6 +166,10 @@ uv run pytest models/yelp-sentiment/tests
 ```
 
 ## API usage
+
+Run the API commands from the repository root. You do not need to change into
+`apps/api`; the `uv` workspace resolves the `inference_api` package from the
+project root.
 
 Start the local FastAPI service:
 

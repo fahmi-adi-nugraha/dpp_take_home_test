@@ -46,11 +46,37 @@ curl -L -o /tmp/dpp-inference-models-v1.zip.sha256 \
 (cd /tmp && sha256sum -c dpp-inference-models-v1.zip.sha256)
 ```
 
-Extract the archive from the repository root so the API can find both models:
+Extract the archive from the repository root so the API can find both models at
+their default paths:
 
 ```bash
 unzip -o /tmp/dpp-inference-models-v1.zip -d .
 ```
+
+### Custom artifact locations
+
+The archive can be extracted anywhere. Configure the paths explicitly when it
+is not extracted at the repository root:
+
+```bash
+export DELIVERY_MODEL_PATH=/opt/dpp-models/models/delivery-time/artifacts/model.joblib
+export SENTIMENT_MODEL_PATH=/opt/dpp-models/models/yelp-sentiment/artifacts/bert/model.pt
+export SENTIMENT_TOKENIZER_PATH=/opt/dpp-models/models/yelp-sentiment/artifacts/bert/tokenizer
+
+uv run uvicorn inference_api.main:app
+```
+
+Path requirements:
+
+- `DELIVERY_MODEL_PATH` points to `model.joblib`. Its sibling
+  `model_metadata.json` and `feature_schema.json` must be in the same directory.
+- `SENTIMENT_MODEL_PATH` points to `model.pt`.
+- `SENTIMENT_TOKENIZER_PATH` points to the exported tokenizer directory.
+- Absolute paths are safest outside the repository. Relative paths resolve
+  against the working directory that starts the API.
+
+The same overrides can be placed in `.env` and loaded with
+`uv run --env-file .env uvicorn inference_api.main:app`.
 
 ## Run locally
 
